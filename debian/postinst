@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+# Crear directorio de trabajo
+if [ ! -d "/var/www/html" ]; then
+    mkdir -p /var/www/html
+    chown root:root /var/www/html
+    chmod 755 /var/www/html
+fi
+
+# Iniciar el servicio
+systemctl daemon-reload
+systemctl enable filesystem-daemon
+systemctl start filesystem-daemon

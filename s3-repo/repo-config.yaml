@@ -1,0 +1,46 @@
+bucket: "filesystem-daemon-repo"
+region: "us-east-1"  # Cambiar según tu región preferida
+
+# Configuración del bucket
+bucket_policy:
+  public_read: true
+  cors:
+    -
+      allowed_origins:
+        - "*"
+      allowed_methods:
+        - "GET"
+        - "HEAD"
+      allowed_headers:
+        - "*"
+      max_age_seconds: 3600
+
+# Configuración de la caché de paquetes
+package_cache:
+  enabled: true
+  max_age: "30d"
+
+# Configuración de la firma GPG
+signing:
+  enabled: true
+  key_id: ""  # Se rellenará después de generar la clave
+  key_file: "repo-key.gpg"
+
+# Configuración de la caché de paquetes
+repository:
+  distributions:
+    stable:
+      components:
+        - "main"
+      architectures:
+        - "amd64"
+        - "arm64"
+      signing:
+        enabled: true
+        key_id: ""  # Se rellenará después de generar la clave
+
+# Configuración de la limpieza de paquetes antiguos
+package_cleanup:
+  enabled: true
+  keep_versions: 3
+  cleanup_interval: "7d"

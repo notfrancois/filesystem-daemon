@@ -1,0 +1,49 @@
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/vendor/
+/go.work
+
+# Build artifacts
+/cmd/filesystem-daemon
+/build/
+/bin/
+/tmp/
+
+# Debian package artifacts
+/debian/.debhelper/
+/debian/filesystem-daemon/
+/debian/filesystem-daemon.substvars
+/debian/files
+/debian/*.log
+/debian/*.debhelper
+/debian/debhelper-build-stamp
+*.deb
+*.buildinfo
+*.changes
+*.dsc
+*.tar.gz
+
+# System and IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Test and coverage artifacts
+coverage.txt
+coverage.html
+profile.out
+*.log
+/test/results/
+
+# Security scan reports
+trivy-results.sarif

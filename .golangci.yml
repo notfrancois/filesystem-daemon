@@ -1,0 +1,28 @@
+run:
+  deadline: 5m
+  skip: false
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - gosec
+    - gosimple
+    - ineffassign
+
+linters-settings:
+  gosec:
+    severity: error
+    confidence: 0.8
+    exclude-rules:
+      - id: G104
+      - id: G107
+      - id: G304
+      - id: G401
+      - id: G505
+
+build-tags:
+  - netgo
+  - osusergo
+  - static_build

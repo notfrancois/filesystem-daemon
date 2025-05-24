@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	GO111MODULE=on go build -o cmd/filesystem-daemon ./main.go
+
+override_dh_auto_install:
+	install -d $(DESTDIR)/usr/bin
+	install -m 755 cmd/filesystem-daemon $(DESTDIR)/usr/bin/
+
+override_dh_auto_test:
+	true
