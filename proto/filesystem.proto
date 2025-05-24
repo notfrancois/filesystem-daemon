@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+package filesystem;
+
+option go_package = "github.com/filesystem-daemon/proto";
+
+// FilesystemService provides methods for file operations
+service FilesystemService {
+  // List directory contents
+  rpc ListDirectory(ListRequest) returns (ListResponse) {}
+  
+  // Get file information
+  rpc GetFileInfo(FileRequest) returns (FileInfo) {}
+  
+  // Create directory
+  rpc CreateDirectory(CreateDirectoryRequest) returns (OperationResponse) {}
+  
+  // Delete file or directory
+  rpc Delete(DeleteRequest) returns (OperationResponse) {}
+  
+  // Copy file or directory
+  rpc Copy(CopyRequest) returns (OperationResponse) {}
+  
+  // Move/rename file or directory
+  rpc Move(MoveRequest) returns (OperationResponse) {}
+  
+  // Upload file (streaming from client)
+  rpc UploadFile(stream FileChunk) returns (OperationResponse) {}
+  
+  // Download file (streaming to client)
+  rpc DownloadFile(FileRequest) returns (stream FileChunk) {}
+  
+  // Check if path exists
+  rpc Exists(PathRequest) returns (ExistsResponse) {}
+  
+  // Get directory size
+  rpc GetDirectorySize(PathRequest) returns (SizeResponse) {}
+  
+  // Search for files/directories
+  rpc Search(SearchRequest) returns (ListResponse) {}
+}
+
+// ListRequest specifies a directory to list
+message ListRequest {
+  string path = 1;
+  bool recursive = 2;
+  string pattern = 3; // Optional glob pattern
+}
+
+// FileItem represents a file or directory
+message FileItem {
+  string name = 1;
+  string path = 2;
+  bool is_directory = 3;
+  int64 size = 4;
+  int64 modified_time = 5;
+  string permissions = 6;
+}
+
+// ListResponse contains directory contents
+message ListResponse {
+  repeated FileItem items = 1;
+}
+
+// FileRequest specifies a file path
+message FileRequest {
+  string path = 1;
+}
+
+// FileInfo contains detailed information about a file
+message FileInfo {
+  string name = 1;
+  string path = 2;
+  bool is_directory = 3;
+  int64 size = 4;
+  int64 modified_time = 5;
+  int64 creation_time = 6;
+  int64 access_time = 7;
+  string mime_type = 8;
+  string permissions = 9;
+  string owner = 10;
+  string group = 11;
+}
+
+// CreateDirectoryRequest specifies path for new directory
+message CreateDirectoryRequest {
+  string path = 1;
+  int32 permissions = 2; // Optional octal permissions
+}
+
+// DeleteRequest specifies path to delete
+message DeleteRequest {
+  string path = 1;
+  bool recursive = 2; // For directories
+}
+
+// CopyRequest specifies source and destination
+message CopyRequest {
+  string source = 1;
+  string destination = 2;
+  bool overwrite = 3;
+}
+
+// MoveRequest specifies source and destination
+message MoveRequest {
+  string source = 1;
+  string destination = 2;
+  bool overwrite = 3;
+}
+
+// PathRequest specifies a path for operations
+message PathRequest {
+  string path = 1;
+}
+
+// ExistsResponse indicates if a path exists
+message ExistsResponse {
+  bool exists = 1;
+  bool is_directory = 2;
+}
+
+// SizeResponse returns size in bytes
+message SizeResponse {
+  int64 size = 1;
+}
+
+// FileChunk is used for file transfers
+message FileChunk {
+  string file_path = 1;
+  bytes content = 2;
+  int64 offset = 3;
+  bool is_last = 4;
+}
+
+// OperationResponse returns result of an operation
+message OperationResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+}
+
+// SearchRequest defines search parameters
+message SearchRequest {
+  string base_path = 1;
+  string pattern = 2;
+  bool case_sensitive = 3;
+  bool recursive = 4;
+  bool directories_only = 5;
+  bool files_only = 6;
+  int32 max_results = 7;
+}
