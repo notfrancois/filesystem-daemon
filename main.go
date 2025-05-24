@@ -86,26 +86,26 @@ func main() {
 	if devMode && !prodEnv {
 		log.Println("⚠️ WARNING: Ejecutando en modo desarrollo sin TLS. NO USAR EN PRODUCCIÓN. ⚠️")
 		log.Println("⚠️ Las conexiones inseguras están limitadas ÚNICAMENTE a localhost (127.0.0.1) ⚠️")
-		
+
 		// Only bind to localhost for insecure connections
 		lis, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", Config.GRPCPort))
 		if err != nil {
 			log.Fatalf("Failed to listen: %v", err)
 		}
-		
+
 		grpcServer = grpc.NewServer()
 	} else {
 		// Always use TLS for production or if dev mode is not explicitly enabled
 		if devMode && prodEnv {
 			log.Println("Detectado entorno de producción. Ignorando DEV_MODE y forzando TLS.")
 		}
-		
+
 		// Listen on all interfaces but with TLS
 		lis, err = net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", Config.GRPCPort))
 		if err != nil {
 			log.Fatalf("Failed to listen: %v", err)
 		}
-		
+
 		creds := credentials.NewTLS(Config.TLSConfig)
 		grpcServer = grpc.NewServer(grpc.Creds(creds))
 	}

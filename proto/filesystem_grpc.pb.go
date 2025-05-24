@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	FilesystemService_ListDirectory_FullMethodName    = "/filesystem.FilesystemService/ListDirectory"
+	FilesystemService_GetHierarchy_FullMethodName     = "/filesystem.FilesystemService/GetHierarchy"
 	FilesystemService_GetFileInfo_FullMethodName      = "/filesystem.FilesystemService/GetFileInfo"
 	FilesystemService_CreateDirectory_FullMethodName  = "/filesystem.FilesystemService/CreateDirectory"
 	FilesystemService_Delete_FullMethodName           = "/filesystem.FilesystemService/Delete"
@@ -40,6 +41,8 @@ const (
 type FilesystemServiceClient interface {
 	// List directory contents
 	ListDirectory(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	// Get directory hierarchy (with nested structure)
+	GetHierarchy(ctx context.Context, in *HierarchyRequest, opts ...grpc.CallOption) (*HierarchyResponse, error)
 	// Get file information
 	GetFileInfo(ctx context.Context, in *FileRequest, opts ...grpc.CallOption) (*FileInfo, error)
 	// Create directory
@@ -74,6 +77,16 @@ func (c *filesystemServiceClient) ListDirectory(ctx context.Context, in *ListReq
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListResponse)
 	err := c.cc.Invoke(ctx, FilesystemService_ListDirectory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesystemServiceClient) GetHierarchy(ctx context.Context, in *HierarchyRequest, opts ...grpc.CallOption) (*HierarchyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HierarchyResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_GetHierarchy_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -200,6 +213,8 @@ func (c *filesystemServiceClient) Search(ctx context.Context, in *SearchRequest,
 type FilesystemServiceServer interface {
 	// List directory contents
 	ListDirectory(context.Context, *ListRequest) (*ListResponse, error)
+	// Get directory hierarchy (with nested structure)
+	GetHierarchy(context.Context, *HierarchyRequest) (*HierarchyResponse, error)
 	// Get file information
 	GetFileInfo(context.Context, *FileRequest) (*FileInfo, error)
 	// Create directory
@@ -232,6 +247,9 @@ type UnimplementedFilesystemServiceServer struct{}
 
 func (UnimplementedFilesystemServiceServer) ListDirectory(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListDirectory not implemented")
+}
+func (UnimplementedFilesystemServiceServer) GetHierarchy(context.Context, *HierarchyRequest) (*HierarchyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetHierarchy not implemented")
 }
 func (UnimplementedFilesystemServiceServer) GetFileInfo(context.Context, *FileRequest) (*FileInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFileInfo not implemented")
@@ -298,6 +316,24 @@ func _FilesystemService_ListDirectory_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FilesystemServiceServer).ListDirectory(ctx, req.(*ListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FilesystemService_GetHierarchy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HierarchyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).GetHierarchy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_GetHierarchy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).GetHierarchy(ctx, req.(*HierarchyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -474,6 +510,10 @@ var FilesystemService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListDirectory",
 			Handler:    _FilesystemService_ListDirectory_Handler,
+		},
+		{
+			MethodName: "GetHierarchy",
+			Handler:    _FilesystemService_GetHierarchy_Handler,
 		},
 		{
 			MethodName: "GetFileInfo",

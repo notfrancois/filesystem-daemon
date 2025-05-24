@@ -9,6 +9,9 @@ service FilesystemService {
   // List directory contents
   rpc ListDirectory(ListRequest) returns (ListResponse) {}
   
+  // Get directory hierarchy (with nested structure)
+  rpc GetHierarchy(HierarchyRequest) returns (HierarchyResponse) {}
+  
   // Get file information
   rpc GetFileInfo(FileRequest) returns (FileInfo) {}
   
@@ -55,6 +58,9 @@ message FileItem {
   int64 size = 4;
   int64 modified_time = 5;
   string permissions = 6;
+  // Fields added to support hierarchy
+  repeated FileItem children = 7;   // Child items if this is a directory
+  string parent_path = 8;          // Path to parent directory
 }
 
 // ListResponse contains directory contents
@@ -148,4 +154,17 @@ message SearchRequest {
   bool directories_only = 5;
   bool files_only = 6;
   int32 max_results = 7;
+}
+
+// HierarchyRequest specifies a directory to get hierarchy for
+message HierarchyRequest {
+  string path = 1;
+  int32 max_depth = 2;    // Maximum depth to traverse (0 for unlimited)
+  string pattern = 3;     // Optional glob pattern
+}
+
+// HierarchyResponse contains directory hierarchy
+message HierarchyResponse {
+  FileItem root = 1;       // Root directory with nested children
+  bool truncated = 2;      // Indicates if hierarchy was truncated due to max_depth
 }

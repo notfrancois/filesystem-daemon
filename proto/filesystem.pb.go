@@ -84,13 +84,16 @@ func (x *ListRequest) GetPattern() string {
 
 // FileItem represents a file or directory
 type FileItem struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Path          string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
-	IsDirectory   bool                   `protobuf:"varint,3,opt,name=is_directory,json=isDirectory,proto3" json:"is_directory,omitempty"`
-	Size          int64                  `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
-	ModifiedTime  int64                  `protobuf:"varint,5,opt,name=modified_time,json=modifiedTime,proto3" json:"modified_time,omitempty"`
-	Permissions   string                 `protobuf:"bytes,6,opt,name=permissions,proto3" json:"permissions,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Name         string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Path         string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	IsDirectory  bool                   `protobuf:"varint,3,opt,name=is_directory,json=isDirectory,proto3" json:"is_directory,omitempty"`
+	Size         int64                  `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
+	ModifiedTime int64                  `protobuf:"varint,5,opt,name=modified_time,json=modifiedTime,proto3" json:"modified_time,omitempty"`
+	Permissions  string                 `protobuf:"bytes,6,opt,name=permissions,proto3" json:"permissions,omitempty"`
+	// Fields added to support hierarchy
+	Children      []*FileItem `protobuf:"bytes,7,rep,name=children,proto3" json:"children,omitempty"`                       // Child items if this is a directory
+	ParentPath    string      `protobuf:"bytes,8,opt,name=parent_path,json=parentPath,proto3" json:"parent_path,omitempty"` // Path to parent directory
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -163,6 +166,20 @@ func (x *FileItem) GetModifiedTime() int64 {
 func (x *FileItem) GetPermissions() string {
 	if x != nil {
 		return x.Permissions
+	}
+	return ""
+}
+
+func (x *FileItem) GetChildren() []*FileItem {
+	if x != nil {
+		return x.Children
+	}
+	return nil
+}
+
+func (x *FileItem) GetParentPath() string {
+	if x != nil {
+		return x.ParentPath
 	}
 	return ""
 }
@@ -976,6 +993,120 @@ func (x *SearchRequest) GetMaxResults() int32 {
 	return 0
 }
 
+// HierarchyRequest specifies a directory to get hierarchy for
+type HierarchyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	MaxDepth      int32                  `protobuf:"varint,2,opt,name=max_depth,json=maxDepth,proto3" json:"max_depth,omitempty"` // Maximum depth to traverse (0 for unlimited)
+	Pattern       string                 `protobuf:"bytes,3,opt,name=pattern,proto3" json:"pattern,omitempty"`                    // Optional glob pattern
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HierarchyRequest) Reset() {
+	*x = HierarchyRequest{}
+	mi := &file_proto_filesystem_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HierarchyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HierarchyRequest) ProtoMessage() {}
+
+func (x *HierarchyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HierarchyRequest.ProtoReflect.Descriptor instead.
+func (*HierarchyRequest) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *HierarchyRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *HierarchyRequest) GetMaxDepth() int32 {
+	if x != nil {
+		return x.MaxDepth
+	}
+	return 0
+}
+
+func (x *HierarchyRequest) GetPattern() string {
+	if x != nil {
+		return x.Pattern
+	}
+	return ""
+}
+
+// HierarchyResponse contains directory hierarchy
+type HierarchyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Root          *FileItem              `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"`            // Root directory with nested children
+	Truncated     bool                   `protobuf:"varint,2,opt,name=truncated,proto3" json:"truncated,omitempty"` // Indicates if hierarchy was truncated due to max_depth
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HierarchyResponse) Reset() {
+	*x = HierarchyResponse{}
+	mi := &file_proto_filesystem_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HierarchyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HierarchyResponse) ProtoMessage() {}
+
+func (x *HierarchyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HierarchyResponse.ProtoReflect.Descriptor instead.
+func (*HierarchyResponse) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *HierarchyResponse) GetRoot() *FileItem {
+	if x != nil {
+		return x.Root
+	}
+	return nil
+}
+
+func (x *HierarchyResponse) GetTruncated() bool {
+	if x != nil {
+		return x.Truncated
+	}
+	return false
+}
+
 var File_proto_filesystem_proto protoreflect.FileDescriptor
 
 const file_proto_filesystem_proto_rawDesc = "" +
@@ -985,14 +1116,17 @@ const file_proto_filesystem_proto_rawDesc = "" +
 	"\vListRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1c\n" +
 	"\trecursive\x18\x02 \x01(\bR\trecursive\x12\x18\n" +
-	"\apattern\x18\x03 \x01(\tR\apattern\"\xb0\x01\n" +
+	"\apattern\x18\x03 \x01(\tR\apattern\"\x83\x02\n" +
 	"\bFileItem\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12!\n" +
 	"\fis_directory\x18\x03 \x01(\bR\visDirectory\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12#\n" +
 	"\rmodified_time\x18\x05 \x01(\x03R\fmodifiedTime\x12 \n" +
-	"\vpermissions\x18\x06 \x01(\tR\vpermissions\":\n" +
+	"\vpermissions\x18\x06 \x01(\tR\vpermissions\x120\n" +
+	"\bchildren\x18\a \x03(\v2\x14.filesystem.FileItemR\bchildren\x12\x1f\n" +
+	"\vparent_path\x18\b \x01(\tR\n" +
+	"parentPath\":\n" +
 	"\fListResponse\x12*\n" +
 	"\x05items\x18\x01 \x03(\v2\x14.filesystem.FileItemR\x05items\"!\n" +
 	"\vFileRequest\x12\x12\n" +
@@ -1050,9 +1184,17 @@ const file_proto_filesystem_proto_rawDesc = "" +
 	"\n" +
 	"files_only\x18\x06 \x01(\bR\tfilesOnly\x12\x1f\n" +
 	"\vmax_results\x18\a \x01(\x05R\n" +
-	"maxResults2\x92\x06\n" +
+	"maxResults\"]\n" +
+	"\x10HierarchyRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1b\n" +
+	"\tmax_depth\x18\x02 \x01(\x05R\bmaxDepth\x12\x18\n" +
+	"\apattern\x18\x03 \x01(\tR\apattern\"[\n" +
+	"\x11HierarchyResponse\x12(\n" +
+	"\x04root\x18\x01 \x01(\v2\x14.filesystem.FileItemR\x04root\x12\x1c\n" +
+	"\ttruncated\x18\x02 \x01(\bR\ttruncated2\xe1\x06\n" +
 	"\x11FilesystemService\x12D\n" +
-	"\rListDirectory\x12\x17.filesystem.ListRequest\x1a\x18.filesystem.ListResponse\"\x00\x12>\n" +
+	"\rListDirectory\x12\x17.filesystem.ListRequest\x1a\x18.filesystem.ListResponse\"\x00\x12M\n" +
+	"\fGetHierarchy\x12\x1c.filesystem.HierarchyRequest\x1a\x1d.filesystem.HierarchyResponse\"\x00\x12>\n" +
 	"\vGetFileInfo\x12\x17.filesystem.FileRequest\x1a\x14.filesystem.FileInfo\"\x00\x12V\n" +
 	"\x0fCreateDirectory\x12\".filesystem.CreateDirectoryRequest\x1a\x1d.filesystem.OperationResponse\"\x00\x12D\n" +
 	"\x06Delete\x12\x19.filesystem.DeleteRequest\x1a\x1d.filesystem.OperationResponse\"\x00\x12@\n" +
@@ -1077,7 +1219,7 @@ func file_proto_filesystem_proto_rawDescGZIP() []byte {
 	return file_proto_filesystem_proto_rawDescData
 }
 
-var file_proto_filesystem_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_proto_filesystem_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_proto_filesystem_proto_goTypes = []any{
 	(*ListRequest)(nil),            // 0: filesystem.ListRequest
 	(*FileItem)(nil),               // 1: filesystem.FileItem
@@ -1094,36 +1236,42 @@ var file_proto_filesystem_proto_goTypes = []any{
 	(*FileChunk)(nil),              // 12: filesystem.FileChunk
 	(*OperationResponse)(nil),      // 13: filesystem.OperationResponse
 	(*SearchRequest)(nil),          // 14: filesystem.SearchRequest
+	(*HierarchyRequest)(nil),       // 15: filesystem.HierarchyRequest
+	(*HierarchyResponse)(nil),      // 16: filesystem.HierarchyResponse
 }
 var file_proto_filesystem_proto_depIdxs = []int32{
-	1,  // 0: filesystem.ListResponse.items:type_name -> filesystem.FileItem
-	0,  // 1: filesystem.FilesystemService.ListDirectory:input_type -> filesystem.ListRequest
-	3,  // 2: filesystem.FilesystemService.GetFileInfo:input_type -> filesystem.FileRequest
-	5,  // 3: filesystem.FilesystemService.CreateDirectory:input_type -> filesystem.CreateDirectoryRequest
-	6,  // 4: filesystem.FilesystemService.Delete:input_type -> filesystem.DeleteRequest
-	7,  // 5: filesystem.FilesystemService.Copy:input_type -> filesystem.CopyRequest
-	8,  // 6: filesystem.FilesystemService.Move:input_type -> filesystem.MoveRequest
-	12, // 7: filesystem.FilesystemService.UploadFile:input_type -> filesystem.FileChunk
-	3,  // 8: filesystem.FilesystemService.DownloadFile:input_type -> filesystem.FileRequest
-	9,  // 9: filesystem.FilesystemService.Exists:input_type -> filesystem.PathRequest
-	9,  // 10: filesystem.FilesystemService.GetDirectorySize:input_type -> filesystem.PathRequest
-	14, // 11: filesystem.FilesystemService.Search:input_type -> filesystem.SearchRequest
-	2,  // 12: filesystem.FilesystemService.ListDirectory:output_type -> filesystem.ListResponse
-	4,  // 13: filesystem.FilesystemService.GetFileInfo:output_type -> filesystem.FileInfo
-	13, // 14: filesystem.FilesystemService.CreateDirectory:output_type -> filesystem.OperationResponse
-	13, // 15: filesystem.FilesystemService.Delete:output_type -> filesystem.OperationResponse
-	13, // 16: filesystem.FilesystemService.Copy:output_type -> filesystem.OperationResponse
-	13, // 17: filesystem.FilesystemService.Move:output_type -> filesystem.OperationResponse
-	13, // 18: filesystem.FilesystemService.UploadFile:output_type -> filesystem.OperationResponse
-	12, // 19: filesystem.FilesystemService.DownloadFile:output_type -> filesystem.FileChunk
-	10, // 20: filesystem.FilesystemService.Exists:output_type -> filesystem.ExistsResponse
-	11, // 21: filesystem.FilesystemService.GetDirectorySize:output_type -> filesystem.SizeResponse
-	2,  // 22: filesystem.FilesystemService.Search:output_type -> filesystem.ListResponse
-	12, // [12:23] is the sub-list for method output_type
-	1,  // [1:12] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	1,  // 0: filesystem.FileItem.children:type_name -> filesystem.FileItem
+	1,  // 1: filesystem.ListResponse.items:type_name -> filesystem.FileItem
+	1,  // 2: filesystem.HierarchyResponse.root:type_name -> filesystem.FileItem
+	0,  // 3: filesystem.FilesystemService.ListDirectory:input_type -> filesystem.ListRequest
+	15, // 4: filesystem.FilesystemService.GetHierarchy:input_type -> filesystem.HierarchyRequest
+	3,  // 5: filesystem.FilesystemService.GetFileInfo:input_type -> filesystem.FileRequest
+	5,  // 6: filesystem.FilesystemService.CreateDirectory:input_type -> filesystem.CreateDirectoryRequest
+	6,  // 7: filesystem.FilesystemService.Delete:input_type -> filesystem.DeleteRequest
+	7,  // 8: filesystem.FilesystemService.Copy:input_type -> filesystem.CopyRequest
+	8,  // 9: filesystem.FilesystemService.Move:input_type -> filesystem.MoveRequest
+	12, // 10: filesystem.FilesystemService.UploadFile:input_type -> filesystem.FileChunk
+	3,  // 11: filesystem.FilesystemService.DownloadFile:input_type -> filesystem.FileRequest
+	9,  // 12: filesystem.FilesystemService.Exists:input_type -> filesystem.PathRequest
+	9,  // 13: filesystem.FilesystemService.GetDirectorySize:input_type -> filesystem.PathRequest
+	14, // 14: filesystem.FilesystemService.Search:input_type -> filesystem.SearchRequest
+	2,  // 15: filesystem.FilesystemService.ListDirectory:output_type -> filesystem.ListResponse
+	16, // 16: filesystem.FilesystemService.GetHierarchy:output_type -> filesystem.HierarchyResponse
+	4,  // 17: filesystem.FilesystemService.GetFileInfo:output_type -> filesystem.FileInfo
+	13, // 18: filesystem.FilesystemService.CreateDirectory:output_type -> filesystem.OperationResponse
+	13, // 19: filesystem.FilesystemService.Delete:output_type -> filesystem.OperationResponse
+	13, // 20: filesystem.FilesystemService.Copy:output_type -> filesystem.OperationResponse
+	13, // 21: filesystem.FilesystemService.Move:output_type -> filesystem.OperationResponse
+	13, // 22: filesystem.FilesystemService.UploadFile:output_type -> filesystem.OperationResponse
+	12, // 23: filesystem.FilesystemService.DownloadFile:output_type -> filesystem.FileChunk
+	10, // 24: filesystem.FilesystemService.Exists:output_type -> filesystem.ExistsResponse
+	11, // 25: filesystem.FilesystemService.GetDirectorySize:output_type -> filesystem.SizeResponse
+	2,  // 26: filesystem.FilesystemService.Search:output_type -> filesystem.ListResponse
+	15, // [15:27] is the sub-list for method output_type
+	3,  // [3:15] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_proto_filesystem_proto_init() }
@@ -1137,7 +1285,7 @@ func file_proto_filesystem_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_filesystem_proto_rawDesc), len(file_proto_filesystem_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

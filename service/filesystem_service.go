@@ -13,12 +13,15 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	
+	// Import the generated protobuf code
+	pb "github.com/notfrancois/filesystem-daemon/proto"
 )
 
 // FilesystemService implements the gRPC filesystem service
 type FilesystemService struct {
 	BaseDir string // Root directory for all operations
-	UnimplementedFilesystemServiceServer
+	pb.UnimplementedFilesystemServiceServer
 }
 
 // NewFilesystemService creates a new instance of the filesystem service
@@ -65,8 +68,8 @@ func (s *FilesystemService) validatePath(path string) (string, error) {
 }
 
 // fileInfoToProto converts os.FileInfo to the protobuf FileInfo message
-func fileInfoToProto(path string, info os.FileInfo) *FileInfo {
-	return &FileInfo{
+func fileInfoToProto(path string, info os.FileInfo) *pb.FileInfo {
+	return &pb.FileInfo{
 		Name:         info.Name(),
 		Path:         path,
 		IsDirectory:  info.IsDir(),
@@ -77,14 +80,15 @@ func fileInfoToProto(path string, info os.FileInfo) *FileInfo {
 }
 
 // fileItemToProto converts os.FileInfo to the protobuf FileItem message (simpler than FileInfo)
-func fileItemToProto(basePath string, info os.FileInfo) *FileItem {
-	return &FileItem{
+func fileItemToProto(basePath string, info os.FileInfo) *pb.FileItem {
+	return &pb.FileItem{
 		Name:         info.Name(),
 		Path:         filepath.Join(basePath, info.Name()),
 		IsDirectory:  info.IsDir(),
 		Size:         info.Size(),
 		ModifiedTime: info.ModTime().Unix(),
 		Permissions:  fmt.Sprintf("%o", info.Mode().Perm()),
+		// Children and ParentPath will be available after proto regeneration
 	}
 }
 
@@ -252,3 +256,5 @@ func (s *FilesystemService) Exists(ctx context.Context, req *PathRequest) (*Exis
 		IsDirectory: info.IsDir(),
 	}, nil
 }
+
+// GetHierarchy implements the GetHierarchy RPC method is defined in filesystem_hierarchy.go
