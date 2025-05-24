@@ -74,9 +74,41 @@ func main() {
 		log.Printf("Warning: Failed to set PR_SET_NO_NEW_PRIVS: %v", err)
 	}
 
-	// Initialize gRPC server with TLS
-	creds := credentials.NewTLS(Config.TLSConfig)
-	grpcServer := grpc.NewServer(grpc.Creds(creds))
+	// By default, use TLS for production
+	var grpcServer *grpc.Server
+	var lis net.Listener
+
+	// For development, allow connections without TLS, but with strict safeguards
+	devMode := os.Getenv("DEV_MODE") == "true"
+	prodEnv := os.Getenv("ENVIRONMENT") == "production" || os.Getenv("ENV") == "production"
+
+	// Never allow insecure mode in production, regardless of DEV_MODE setting
+	if devMode && !prodEnv {
+		log.Println("⚠️ WARNING: Ejecutando en modo desarrollo sin TLS. NO USAR EN PRODUCCIÓN. ⚠️")
+		log.Println("⚠️ Las conexiones inseguras están limitadas ÚNICAMENTE a localhost (127.0.0.1) ⚠️")
+		
+		// Only bind to localhost for insecure connections
+		lis, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", Config.GRPCPort))
+		if err != nil {
+			log.Fatalf("Failed to listen: %v", err)
+		}
+		
+		grpcServer = grpc.NewServer()
+	} else {
+		// Always use TLS for production or if dev mode is not explicitly enabled
+		if devMode && prodEnv {
+			log.Println("Detectado entorno de producción. Ignorando DEV_MODE y forzando TLS.")
+		}
+		
+		// Listen on all interfaces but with TLS
+		lis, err = net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", Config.GRPCPort))
+		if err != nil {
+			log.Fatalf("Failed to listen: %v", err)
+		}
+		
+		creds := credentials.NewTLS(Config.TLSConfig)
+		grpcServer = grpc.NewServer(grpc.Creds(creds))
+	}
 
 	// Create and register the filesystem service
 	filesystemService := service.NewFilesystemService(Config.WatchDir)
@@ -128,13 +160,12 @@ func main() {
 		}
 	}()
 
-	// Start gRPC server - explicitly bind to all interfaces
-	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", Config.GRPCPort))
-	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+	// Log server startup info
+	if devMode && !prodEnv {
+		log.Printf("Starting gRPC server on port %d without TLS (DEV MODE)", Config.GRPCPort)
+	} else {
+		log.Printf("Starting gRPC server on port %d with TLS", Config.GRPCPort)
 	}
-
-	log.Printf("Starting gRPC server on port %d with TLS", Config.GRPCPort)
 	log.Printf("Ready to handle C# client requests for filesystem operations")
 
 	// Start serving in the main goroutine
