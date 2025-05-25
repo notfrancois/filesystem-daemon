@@ -31,7 +31,7 @@ jobs:
               run: go mod tidy
 
             - name: Security Scanning
-              uses: github/codeql-action/analyze@v2
+              uses: github/codeql-action/analyze@v3
               with:
                   languages: go
                   category: "security"
@@ -39,7 +39,7 @@ jobs:
                   autoupdate-dependencies: true
 
             - name: Dependency Scanning
-              uses: github/codeql-action/analyze@v2
+              uses: github/codeql-action/analyze@v3
               with:
                   languages: go
                   category: "dependency"
@@ -83,7 +83,7 @@ jobs:
                   exit-code: 1
 
             - name: Upload Security Report
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: security-report
                   path: trivy-results.sarif
@@ -97,7 +97,7 @@ jobs:
                   # Crear directorio temporal
                   mkdir -p build
                   cp -r debian build/
-                  
+
                   # Copiar ambos binarios
                   cp filesystem-daemon build/
                   cp fsdaemon build/
@@ -107,7 +107,7 @@ jobs:
                   dpkg-buildpackage -us -uc
 
             - name: Configure AWS credentials
-              uses: aws-actions/configure-aws-credentials@v2
+              uses: aws-actions/configure-aws-credentials@v4
               with:
                   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -152,13 +152,13 @@ jobs:
               run: |
                   # Importar la clave GPG privada desde el secreto (en formato base64)
                   echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
-                  
+
                   # Exportar la clave pública
                   gpg --export -a "Filesystem Daemon Repo" > /tmp/apt.key
-                  
+
                   # Subir la clave pública a S3 (ubicación principal para instalación)
                   aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/apt/ --acl public-read
-                  
+
                   # También subir la clave a la raíz para mayor compatibilidad
                   aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/pub.key --acl public-read
 
