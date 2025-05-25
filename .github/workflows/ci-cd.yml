@@ -6,6 +6,13 @@ on:
     pull_request:
         branches: ["main"]
 
+permissions:
+    # Required for all workflows
+    security-events: write
+    # Only required for workflows in private repositories
+    actions: read
+    contents: read
+
 env:
     AWS_REGION: us-east-1
     BUCKET_NAME: ctdesarrollo
