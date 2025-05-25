@@ -30,20 +30,15 @@ jobs:
             - name: Install dependencies
               run: go mod tidy
 
-            - name: Security Scanning
-              uses: github/codeql-action/analyze@v3
+            - name: Initialize CodeQL
+              uses: github/codeql-action/init@v3
               with:
                   languages: go
-                  category: "security"
-                  sarif: true
-                  autoupdate-dependencies: true
 
-            - name: Dependency Scanning
+            - name: Perform CodeQL Analysis
               uses: github/codeql-action/analyze@v3
               with:
-                  languages: go
-                  category: "dependency"
-                  sarif: true
+                  category: "security"
 
             - name: License Checking
               uses: fossas/fossa-action@main
