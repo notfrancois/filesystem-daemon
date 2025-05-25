@@ -1,156 +1,173 @@
 name: Secure CI/CD Pipeline
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    push:
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
 
 env:
-  AWS_REGION: us-east-1
-  BUCKET_NAME: filesystem-daemon-repo
-  DISTRIBUTION: stable
-  COMPONENT: main
-  ARCH: amd64
-  SECURITY_SCANNING: true
-  SAST_ENABLED: true
-  DEPSCAN_ENABLED: true
-  LICENSE_CHECK: true
-  SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
-  SIGNING_KEY_PASSPHRASE: ${{ secrets.SIGNING_KEY_PASSPHRASE }}
-
+    AWS_REGION: us-east-1
+    BUCKET_NAME: ctdesarrollo
+    DISTRIBUTION: stable
+    COMPONENT: main
+    ARCH: amd64
+    SECURITY_SCANNING: true
+    SAST_ENABLED: true
+    DEPSCAN_ENABLED: true
+    LICENSE_CHECK: true
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.21'
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.24"
 
-      - name: Install dependencies
-        run: go mod tidy
+            - name: Install dependencies
+              run: go mod tidy
 
-      - name: Security Scanning
-        uses: github/codeql-action/analyze@v2
-        with:
-          languages: go
-          category: "security"
-          sarif: true
-          autoupdate-dependencies: true
+            - name: Security Scanning
+              uses: github/codeql-action/analyze@v2
+              with:
+                  languages: go
+                  category: "security"
+                  sarif: true
+                  autoupdate-dependencies: true
 
-      - name: Dependency Scanning
-        uses: github/codeql-action/analyze@v2
-        with:
-          languages: go
-          category: "dependency"
-          sarif: true
+            - name: Dependency Scanning
+              uses: github/codeql-action/analyze@v2
+              with:
+                  languages: go
+                  category: "dependency"
+                  sarif: true
 
-      - name: License Checking
-        uses: actions/license-compliance@v1
-        with:
-          path: .
-          allowed-licenses: "MIT, Apache-2.0"
+            - name: License Checking
+              uses: fossas/fossa-action@main
+              with:
+                  api-key: ${{ secrets.FOSSA_API_KEY }}
+                  fail-on: license-issues
 
-      - name: Run tests with coverage
-        run: |
-          go test -v -cover ./...
-          go test -race ./...
+            - name: Run tests with coverage
+              run: |
+                  go test -v -cover ./...
+                  go test -race ./...
 
-      - name: Build binary with security flags
-        run: |
-          CGO_ENABLED=0 go build -o cmd/filesystem-daemon \
-            -ldflags="-s -w -X main.version=${{ github.sha }}" \
-            -tags "netgo osusergo static_build" \
-            ./main.go
+            - name: Build binaries with security flags
+              run: |
+                  # Compila el daemon
+                  echo "Compilando el daemon..."
+                  CGO_ENABLED=0 go build -o filesystem-daemon \
+                    -ldflags="-s -w -X main.version=${{ github.sha }}" \
+                    -tags "netgo osusergo static_build" \
+                    ./cmd/daemon/main.go
 
-      - name: Binary Security Analysis
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
-          format: sarif
-          output: trivy-results.sarif
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
-          exit-code: 1
+                  # Compila el CLI
+                  echo "Compilando el CLI..."
+                  CGO_ENABLED=0 go build -o fsdaemon \
+                    -ldflags="-s -w -X main.version=${{ github.sha }}" \
+                    -tags "netgo osusergo static_build" \
+                    ./cmd/cli/main.go
 
-      - name: Upload Security Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: security-report
-          path: trivy-results.sarif
+            - name: Binary Security Analysis
+              uses: aquasecurity/trivy-action@master
+              with:
+                  scan-type: fs
+                  format: sarif
+                  output: trivy-results.sarif
+                  ignore-unfixed: true
+                  severity: HIGH,CRITICAL
+                  exit-code: 1
 
-      - name: Create Debian package
-        run: |
-          # Instalar herramientas necesarias
-          sudo apt-get update
-          sudo apt-get install -y build-essential debhelper dh-make
+            - name: Upload Security Report
+              uses: actions/upload-artifact@v3
+              with:
+                  name: security-report
+                  path: trivy-results.sarif
 
-          # Crear directorio temporal
-          mkdir -p build
-          cp -r debian build/
-          cp cmd/filesystem-daemon build/
+            - name: Create Debian package
+              run: |
+                  # Instalar herramientas necesarias
+                  sudo apt-get update
+                  sudo apt-get install -y build-essential debhelper dh-make
 
-          # Construir paquete
-          cd build
-          dpkg-buildpackage -us -uc
+                  # Crear directorio temporal
+                  mkdir -p build
+                  cp -r debian build/
+                  
+                  # Copiar ambos binarios
+                  cp filesystem-daemon build/
+                  cp fsdaemon build/
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+                  # Construir paquete
+                  cd build
+                  dpkg-buildpackage -us -uc
 
-      - name: Publish package to S3
-        run: |
-          # Subir paquete
-          aws s3 cp ../filesystem-daemon_*.deb s3://${BUCKET_NAME}/pool/${COMPONENT}/ --acl public-read
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
 
-          # Generar Packages.gz
-          apt-ftparchive packages /tmp/packages > /tmp/Packages
-          gzip -c /tmp/Packages > /tmp/Packages.gz
+            - name: Publish package to S3
+              run: |
+                  # Subir paquete
+                  aws s3 cp ../filesystem-daemon_*.deb s3://${BUCKET_NAME}/pool/${COMPONENT}/ --acl public-read
 
-          # Firmar Packages
-          gpg --clearsign -o /tmp/Packages /tmp/Packages
-          gpg --detach-sign /tmp/Packages
+                  # Generar Packages.gz
+                  apt-ftparchive packages /tmp/packages > /tmp/Packages
+                  gzip -c /tmp/Packages > /tmp/Packages.gz
 
-          # Subir índices actualizados
-          aws s3 cp /tmp/Packages s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages --acl public-read
-          aws s3 cp /tmp/Packages.gz s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz --acl public-read
-          aws s3 cp /tmp/Packages.sig s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.sig --acl public-read
+                  # Firmar Packages
+                  gpg --clearsign -o /tmp/Packages /tmp/Packages
+                  gpg --detach-sign /tmp/Packages
 
-      - name: Update Release file
-        run: |
-          # Generar Release
-          cat > /tmp/Release <<EOL
-          Origin: Filesystem Daemon Repo
-          Label: Filesystem Daemon
-          Suite: ${DISTRIBUTION}
-          Codename: ${DISTRIBUTION}
-          Date: $(date -R)
-          Architectures: ${ARCH}
-          Components: ${COMPONENT}
-          Description: Filesystem Daemon Repository
-          EOL
+                  # Subir índices actualizados
+                  aws s3 cp /tmp/Packages s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages --acl public-read
+                  aws s3 cp /tmp/Packages.gz s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz --acl public-read
+                  aws s3 cp /tmp/Packages.sig s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.sig --acl public-read
 
-          # Subir Release
-          aws s3 cp /tmp/Release s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release --acl public-read
+            - name: Update Release file
+              run: |
+                  # Generar Release
+                  cat > /tmp/Release <<EOL
+                  Origin: Filesystem Daemon Repo
+                  Label: Filesystem Daemon
+                  Suite: ${DISTRIBUTION}
+                  Codename: ${DISTRIBUTION}
+                  Date: $(date -R)
+                  Architectures: ${ARCH}
+                  Components: ${COMPONENT}
+                  Description: Filesystem Daemon Repository
+                  EOL
 
-      - name: Update apt key
-        run: |
-          # Subir la clave GPG
-          gpg --export -a "Filesystem Daemon Repo" > /tmp/apt.key
-          aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/apt/ --acl public-read
+                  # Subir Release
+                  aws s3 cp /tmp/Release s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release --acl public-read
 
-      - name: Update apt configuration
-        run: |
-          # Generar archivo de configuración APT
-          cat > /tmp/apt.conf <<EOL
-          deb [signed-by=/usr/share/keyrings/filesystem-daemon-archive-keyring.gpg arch=${ARCH}] https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com ${DISTRIBUTION} ${COMPONENT}
-          EOL
+            - name: Update apt key
+              run: |
+                  # Importar la clave GPG privada desde el secreto (en formato base64)
+                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
+                  
+                  # Exportar la clave pública
+                  gpg --export -a "Filesystem Daemon Repo" > /tmp/apt.key
+                  
+                  # Subir la clave pública a S3 (ubicación principal para instalación)
+                  aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/apt/ --acl public-read
+                  
+                  # También subir la clave a la raíz para mayor compatibilidad
+                  aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/pub.key --acl public-read
 
-          # Subir configuración
-          aws s3 cp /tmp/apt.conf s3://${BUCKET_NAME}/apt/conf/ --acl public-read
+            - name: Update apt configuration
+              run: |
+                  # Generar archivo de configuración APT
+                  cat > /tmp/apt.conf <<EOL
+                  deb [signed-by=/usr/share/keyrings/filesystem-daemon-archive-keyring.gpg arch=${ARCH}] https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com ${DISTRIBUTION} ${COMPONENT}
+                  EOL
+
+                  # Subir configuración
+                  aws s3 cp /tmp/apt.conf s3://${BUCKET_NAME}/apt/conf/ --acl public-read

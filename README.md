@@ -122,11 +122,190 @@ sudo systemctl status filesystem-daemon
 ```
 
 3. Cliente gRPC (C#):
-```csharp
-using Grpc.Net.Client;
 
-var channel = GrpcChannel.ForAddress("http://localhost:50051");
-var client = new Filesystem.FilesystemClient(channel);
+Primero, instale los paquetes NuGet necesarios:
+```bash
+dotnet add package Grpc.Net.Client
+dotnet add package Google.Protobuf
+dotnet add package Grpc.Tools
+```
+
+Agregue el archivo proto a su proyecto (filesystem.proto) y configure su archivo .csproj para generar el código:
+```xml
+<ItemGroup>
+  <Protobuf Include="filesystem.proto" GrpcServices="Client" />
+</ItemGroup>
+```
+
+Ejemplo de cliente C# para operaciones de sistema de archivos:
+```csharp
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Grpc.Net.Client;
+using Google.Protobuf;
+using Filesystem; // Namespace generado desde el proto
+
+public class FilesystemClient
+{
+    private readonly FilesystemService.FilesystemServiceClient _client;
+
+    public FilesystemClient(string serverAddress)
+    {
+        // Configurar el cliente con TLS para conexiones seguras
+        var channel = GrpcChannel.ForAddress(serverAddress, new GrpcChannelOptions
+        {
+            HttpHandler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            }
+        });
+        _client = new FilesystemService.FilesystemServiceClient(channel);
+    }
+
+    // Listar contenido de un directorio
+    public async Task<ListResponse> ListDirectoryAsync(string path, bool recursive = false, string pattern = "")
+    {
+        var request = new ListRequest
+        {
+            Path = path,
+            Recursive = recursive,
+            Pattern = pattern
+        };
+        return await _client.ListDirectoryAsync(request);
+    }
+
+    // Obtener información de un archivo
+    public async Task<FileInfo> GetFileInfoAsync(string path)
+    {
+        var request = new FileRequest { Path = path };
+        return await _client.GetFileInfoAsync(request);
+    }
+
+    // Crear un directorio
+    public async Task<OperationResponse> CreateDirectoryAsync(string path, int permissions = 0755)
+    {
+        var request = new CreateDirectoryRequest
+        {
+            Path = path,
+            Permissions = permissions
+        };
+        return await _client.CreateDirectoryAsync(request);
+    }
+
+    // Eliminar archivo o directorio
+    public async Task<OperationResponse> DeleteAsync(string path, bool recursive = false)
+    {
+        var request = new DeleteRequest
+        {
+            Path = path,
+            Recursive = recursive
+        };
+        return await _client.DeleteAsync(request);
+    }
+
+    // Copiar archivo o directorio
+    public async Task<OperationResponse> CopyAsync(string source, string destination, bool overwrite = false)
+    {
+        var request = new CopyRequest
+        {
+            Source = source,
+            Destination = destination,
+            Overwrite = overwrite
+        };
+        return await _client.CopyAsync(request);
+    }
+
+    // Mover/renombrar archivo o directorio
+    public async Task<OperationResponse> MoveAsync(string source, string destination, bool overwrite = false)
+    {
+        var request = new MoveRequest
+        {
+            Source = source,
+            Destination = destination,
+            Overwrite = overwrite
+        };
+        return await _client.MoveAsync(request);
+    }
+
+    // Subir un archivo (streaming)
+    public async Task<OperationResponse> UploadFileAsync(string localFilePath, string remoteFilePath)
+    {
+        using var call = _client.UploadFile();
+        using var fileStream = new FileStream(localFilePath, FileMode.Open, FileAccess.Read);
+        
+        var buffer = new byte[64 * 1024]; // 64KB chunks
+        int bytesRead;
+        long offset = 0;
+        
+        while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+        {
+            await call.RequestStream.WriteAsync(new FileChunk
+            {
+                FilePath = remoteFilePath,
+                Content = ByteString.CopyFrom(buffer, 0, bytesRead),
+                Offset = offset,
+                IsLast = bytesRead < buffer.Length
+            });
+            
+            offset += bytesRead;
+        }
+        
+        // Marcar el último chunk si el archivo está vacío o no terminó exactamente en el límite de buffer
+        if (offset == 0 || bytesRead == buffer.Length)
+        {
+            await call.RequestStream.WriteAsync(new FileChunk
+            {
+                FilePath = remoteFilePath,
+                Content = ByteString.Empty,
+                Offset = offset,
+                IsLast = true
+            });
+        }
+        
+        await call.RequestStream.CompleteAsync();
+        return await call.ResponseAsync;
+    }
+
+    // Descargar un archivo (streaming)
+    public async Task DownloadFileAsync(string remoteFilePath, string localFilePath)
+    {
+        var request = new FileRequest { Path = remoteFilePath };
+        using var call = _client.DownloadFile(request);
+        using var fileStream = new FileStream(localFilePath, FileMode.Create, FileAccess.Write);
+        
+        await foreach (var chunk in call.ResponseStream.ReadAllAsync())
+        {
+            await fileStream.WriteAsync(chunk.Content.ToByteArray(), 0, chunk.Content.Length);
+        }
+    }
+}
+```
+
+Ejemplo de uso del cliente:
+```csharp
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        var client = new FilesystemClient("https://localhost:50051");
+        
+        // Listar archivos en un directorio
+        var files = await client.ListDirectoryAsync("/var/www/html");
+        foreach (var file in files.Items)
+        {
+            Console.WriteLine($"{file.Name} - {(file.IsDirectory ? "Directory" : "File")} - {file.Size} bytes");
+        }
+        
+        // Crear un directorio
+        var createResponse = await client.CreateDirectoryAsync("/var/www/html/new-folder");
+        Console.WriteLine($"Directory created: {createResponse.Success}");
+        
+        // Subir un archivo
+        var uploadResponse = await client.UploadFileAsync("/path/to/local/file.txt", "/var/www/html/file.txt");
+        Console.WriteLine($"File uploaded: {uploadResponse.Success}");
+    }
+}
 ```
 
 ## Desarrollo

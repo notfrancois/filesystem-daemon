@@ -1,16 +1,19 @@
-module filesystem-daemon
+module github.com/notfrancois/filesystem-daemon
 
-go 1.18
+go 1.24
 
 require (
-	golang.org/x/sys v0.15.0
-	google.golang.org/grpc v1.48.0
+	golang.org/x/sys v0.33.0
+	google.golang.org/grpc v1.72.1
+	google.golang.org/protobuf v1.36.6
 )
 
 require (
-	github.com/golang/protobuf v1.5.3 // indirect
-	golang.org/x/net v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/spf13/cobra v1.9.1 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
+	golang.org/x/net v0.35.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
+	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 )

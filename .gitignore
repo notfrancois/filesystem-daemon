@@ -47,3 +47,6 @@ profile.out
 
 # Security scan reports
 trivy-results.sarif
+
+fsdaemon
+filesystem-daemon
