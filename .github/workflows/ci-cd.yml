@@ -58,6 +58,11 @@ jobs:
                   go test -v -cover ./...
                   go test -race ./...
 
+            - name: Install Protobuf Compiler
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y protobuf-compiler
+
             - name: Build binaries with security flags
               run: |
                   # Compila el daemon
