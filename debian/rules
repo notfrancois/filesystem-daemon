@@ -4,11 +4,13 @@
 	dh $@
 
 override_dh_auto_build:
-	GO111MODULE=on go build -o cmd/filesystem-daemon ./main.go
+	GO111MODULE=on go build -o cmd/filesystem-daemon ./cmd/daemon/main.go
+	GO111MODULE=on go build -o cmd/fsdaemon ./cmd/cli/main.go
 
 override_dh_auto_install:
 	install -d $(DESTDIR)/usr/bin
 	install -m 755 cmd/filesystem-daemon $(DESTDIR)/usr/bin/
+	install -m 755 cmd/fsdaemon $(DESTDIR)/usr/bin/
 
 override_dh_auto_test:
 	true
