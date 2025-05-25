@@ -103,7 +103,7 @@ jobs:
                   sudo apt-get update
                   sudo apt-get install -y build-essential debhelper dh-make \
                       libseccomp-dev libsystemd-dev libcap-dev libaudit-dev
-                  
+
                   # Instalar Go desde la fuente oficial
                   wget https://go.dev/dl/go1.24.3.linux-amd64.tar.gz
                   sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.24.3.linux-amd64.tar.gz
@@ -131,8 +131,13 @@ jobs:
 
             - name: Publish package to S3
               run: |
-                  # Subir paquete
-                  aws s3 cp ../filesystem-daemon_*.deb s3://${BUCKET_NAME}/pool/${COMPONENT}/ --acl public-read
+                  # Buscar el paquete Debian generado
+                  echo "Buscando el paquete Debian generado..."
+                  find . -name "filesystem-daemon_*.deb" -type f
+                  
+                  # Subir paquete (usar el path correcto)
+                  echo "Subiendo paquete a S3..."
+                  aws s3 cp ./filesystem-daemon_*.deb s3://${BUCKET_NAME}/pool/${COMPONENT}/ --acl public-read
 
                   # Generar Packages.gz
                   apt-ftparchive packages /tmp/packages > /tmp/Packages
