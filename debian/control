@@ -3,7 +3,6 @@ Section: admin
 Priority: optional
 Maintainer: François <francois@francois.io>
 Build-Depends: debhelper-compat (= 13),
-               golang-go (>= 1.21),
                libseccomp-dev (>= 2.5.4-1ubuntu3),
                libsystemd-dev (>= 252.5-2ubuntu3.2),
                libcap-dev (>= 1:2.66-3ubuntu2.1),
