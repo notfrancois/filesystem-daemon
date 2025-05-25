@@ -101,7 +101,13 @@ jobs:
               run: |
                   # Instalar herramientas necesarias
                   sudo apt-get update
-                  sudo apt-get install -y build-essential debhelper dh-make
+                  sudo apt-get install -y build-essential debhelper dh-make \
+                      libseccomp-dev libsystemd-dev libcap-dev libaudit-dev
+                  
+                  # Instalar Go desde la fuente oficial
+                  wget https://go.dev/dl/go1.24.3.linux-amd64.tar.gz
+                  sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.24.3.linux-amd64.tar.gz
+                  echo "export PATH=$PATH:/usr/local/go/bin" >> $GITHUB_ENV
 
                   # Crear directorio temporal
                   mkdir -p build
@@ -113,7 +119,8 @@ jobs:
 
                   # Construir paquete
                   cd build
-                  dpkg-buildpackage -us -uc
+                  # Usar sudo con PATH preservado para asegurar que se use Go 1.24
+                  sudo env "PATH=$PATH:/usr/local/go/bin" dpkg-buildpackage -us -uc
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
