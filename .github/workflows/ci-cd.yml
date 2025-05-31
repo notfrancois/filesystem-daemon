@@ -168,24 +168,42 @@ jobs:
 
             - name: Configure GPG
               run: |
-                  # Crear y configurar directorio .gnupg
+                  # Limpiar completamente cualquier configuración GPG existente
+                  rm -rf ~/.gnupg
+
+                  # Crear y configurar directorio .gnupg con permisos correctos
                   mkdir -p ~/.gnupg
                   chmod 700 ~/.gnupg
 
-                  # Configurar el agente GPG
-                  echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
-                  echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
+                  # Configuración básica de GPG
+                  cat > ~/.gnupg/gpg.conf <<EOF
+                  no-tty
+                  pinentry-mode loopback
+                  EOF
 
-                  # Reiniciar el agente GPG de manera segura
-                  pkill gpg-agent || true
+                  # Configuración del agente GPG
+                  cat > ~/.gnupg/gpg-agent.conf <<EOF
+                  allow-loopback-pinentry
+                  pinentry-program /usr/bin/pinentry-tty
+                  default-cache-ttl 7200
+                  max-cache-ttl 14400
+                  EOF
+
+                  # Asegurarse de que no haya agentes GPG corriendo
+                  killall gpg-agent || true
                   gpgconf --kill all || true
-                  gpg-agent --daemon --pinentry-program /usr/bin/pinentry-tty
 
-                  # Importar la clave GPG privada desde el secreto
+                  # Esperar un momento para asegurarse de que todo esté detenido
+                  sleep 2
+
+                  # Iniciar un nuevo agente GPG
+                  eval $(gpg-agent --daemon)
+
+                  # Importar la clave GPG privada
                   echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --yes --import --pinentry-mode loopback
 
-                  # Establecer la confianza en la clave de manera no interactiva
-                  echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key "Filesystem Daemon Repo" trust
+                  # Establecer la confianza en la clave usando un archivo temporal
+                  echo -e "5\ny\nq\n" | gpg --command-fd 0 --no-tty --expert --edit-key "Filesystem Daemon Repo" trust
 
             - name: Publish package to S3
               run: |
