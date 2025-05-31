@@ -12,5 +12,12 @@ override_dh_auto_install:
 	install -m 755 filesystem-daemon $(DESTDIR)/usr/bin/
 	install -m 755 fsdaemon $(DESTDIR)/usr/bin/
 
+override_dh_installinit:
+	# Si estamos en un entorno Docker, usar el script alternativo
+	if [ -f "/.dockerenv" ]; then \
+		cp debian/postinst.docker debian/filesystem-daemon.postinst; \
+	fi
+	dh_installinit
+
 override_dh_auto_test:
 	true

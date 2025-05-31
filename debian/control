@@ -13,14 +13,13 @@ Package: filesystem-daemon
 Architecture: amd64
 Depends: ${shlibs:Depends},
          ${misc:Depends},
-         systemd,
          libseccomp2 (>= 2.5.0),
          libcap2-bin,
          auditd
+Recommends: systemd
 Description: Secure filesystem monitoring daemon with gRPC interface
     This daemon monitors a specified directory and provides a gRPC interface
     for file system operations. It includes security features such as:
-    - Systemd service with secure sandboxing
     - Seccomp-bpf syscall filtering
     - Capability-based security
     - Audit logging
