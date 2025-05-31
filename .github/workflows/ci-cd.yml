@@ -138,13 +138,16 @@ jobs:
                   # Configurar el agente GPG
                   echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
                   echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
-                  gpgconf --kill gpg-agent
-                  gpg-agent --daemon
+
+                  # Reiniciar el agente GPG de manera segura
+                  pkill gpg-agent || true
+                  gpgconf --kill all || true
+                  gpg-agent --daemon --pinentry-program /usr/bin/pinentry-tty
 
                   # Importar la clave GPG privada desde el secreto
-                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import --pinentry-mode loopback
+                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --yes --import --pinentry-mode loopback
 
-                  # Establecer la confianza en la clave
+                  # Establecer la confianza en la clave de manera no interactiva
                   echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key "Filesystem Daemon Repo" trust
 
             - name: Publish package to S3
