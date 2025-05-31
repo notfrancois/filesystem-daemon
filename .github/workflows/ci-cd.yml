@@ -139,13 +139,19 @@ jobs:
                   echo "Subiendo paquete a S3..."
                   aws s3 cp ./filesystem-daemon_*.deb s3://${BUCKET_NAME}/pool/${COMPONENT}/ --acl public-read
 
+                  # Crear estructura de directorios necesaria
+                  mkdir -p /tmp/packages/pool/${COMPONENT}
+                  
+                  # Copiar el paquete .deb al directorio temporal
+                  cp ./filesystem-daemon_*.deb /tmp/packages/pool/${COMPONENT}/
+                  
                   # Generar Packages.gz
                   apt-ftparchive packages /tmp/packages > /tmp/Packages
                   gzip -c /tmp/Packages > /tmp/Packages.gz
-
+                  
                   # Firmar Packages
-                  gpg --clearsign -o /tmp/Packages /tmp/Packages
-                  gpg --detach-sign /tmp/Packages
+                  gpg --clearsign -o /tmp/Packages.asc /tmp/Packages
+                  gpg --detach-sign -o /tmp/Packages.sig /tmp/Packages
 
                   # Subir índices actualizados
                   aws s3 cp /tmp/Packages s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages --acl public-read
