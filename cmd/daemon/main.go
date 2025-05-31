@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"fmt"
@@ -17,8 +18,11 @@ import (
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 
 	"github.com/notfrancois/filesystem-daemon/proto"
 	"github.com/notfrancois/filesystem-daemon/service"
@@ -135,6 +139,148 @@ func parseSize(sizeStr string) int64 {
 	return 100 * 1024 * 1024 // Default 100MB
 }
 
+// parseTrustedNetworks parses CIDR networks from configuration
+func parseTrustedNetworks(networks []string) ([]*net.IPNet, error) {
+	var trustedNets []*net.IPNet
+
+	for _, network := range networks {
+		network = strings.TrimSpace(network)
+		if network == "" {
+			continue
+		}
+
+		// Handle single IPs by adding /32 or /128
+		if !strings.Contains(network, "/") {
+			ip := net.ParseIP(network)
+			if ip == nil {
+				return nil, fmt.Errorf("invalid IP address: %s", network)
+			}
+			if ip.To4() != nil {
+				network += "/32"
+			} else {
+				network += "/128"
+			}
+		}
+
+		_, ipNet, err := net.ParseCIDR(network)
+		if err != nil {
+			return nil, fmt.Errorf("invalid CIDR network %s: %v", network, err)
+		}
+		trustedNets = append(trustedNets, ipNet)
+	}
+
+	return trustedNets, nil
+}
+
+// isIPTrusted checks if an IP address is in any of the trusted networks
+func isIPTrusted(ip net.IP, trustedNets []*net.IPNet) bool {
+	// Always allow localhost
+	if ip.IsLoopback() {
+		return true
+	}
+
+	// Check against trusted networks
+	for _, network := range trustedNets {
+		if network.Contains(ip) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// trustedNetworkInterceptor creates a gRPC interceptor that validates client IPs
+func trustedNetworkInterceptor(trustedNets []*net.IPNet) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// Skip validation in development mode
+		if os.Getenv("DEV_MODE") == "true" && os.Getenv("ENVIRONMENT") != "production" {
+			logrus.WithField("method", info.FullMethod).Debug("Skipping network validation in dev mode")
+			return handler(ctx, req)
+		}
+
+		// Get peer information
+		peer, ok := peer.FromContext(ctx)
+		if !ok {
+			logrus.Warn("Failed to get peer information from context")
+			return nil, status.Errorf(codes.Internal, "Unable to get peer information")
+		}
+
+		// Extract IP address
+		var clientIP net.IP
+		switch addr := peer.Addr.(type) {
+		case *net.TCPAddr:
+			clientIP = addr.IP
+		case *net.UDPAddr:
+			clientIP = addr.IP
+		default:
+			logrus.WithField("addr_type", fmt.Sprintf("%T", addr)).Warn("Unknown address type")
+			return nil, status.Errorf(codes.Internal, "Unknown address type")
+		}
+
+		// Check if IP is trusted
+		if !isIPTrusted(clientIP, trustedNets) {
+			logrus.WithFields(logrus.Fields{
+				"client_ip": clientIP.String(),
+				"method":    info.FullMethod,
+			}).Warn("Rejected connection from untrusted network")
+			return nil, status.Errorf(codes.PermissionDenied, "Connection not allowed from this network")
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"client_ip": clientIP.String(),
+			"method":    info.FullMethod,
+		}).Debug("Accepted connection from trusted network")
+
+		return handler(ctx, req)
+	}
+}
+
+// trustedNetworkStreamInterceptor creates a streaming gRPC interceptor for network validation
+func trustedNetworkStreamInterceptor(trustedNets []*net.IPNet) grpc.StreamServerInterceptor {
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		// Skip validation in development mode
+		if os.Getenv("DEV_MODE") == "true" && os.Getenv("ENVIRONMENT") != "production" {
+			logrus.WithField("method", info.FullMethod).Debug("Skipping network validation in dev mode")
+			return handler(srv, ss)
+		}
+
+		// Get peer information
+		peer, ok := peer.FromContext(ss.Context())
+		if !ok {
+			logrus.Warn("Failed to get peer information from stream context")
+			return status.Errorf(codes.Internal, "Unable to get peer information")
+		}
+
+		// Extract IP address
+		var clientIP net.IP
+		switch addr := peer.Addr.(type) {
+		case *net.TCPAddr:
+			clientIP = addr.IP
+		case *net.UDPAddr:
+			clientIP = addr.IP
+		default:
+			logrus.WithField("addr_type", fmt.Sprintf("%T", addr)).Warn("Unknown address type")
+			return status.Errorf(codes.Internal, "Unknown address type")
+		}
+
+		// Check if IP is trusted
+		if !isIPTrusted(clientIP, trustedNets) {
+			logrus.WithFields(logrus.Fields{
+				"client_ip": clientIP.String(),
+				"method":    info.FullMethod,
+			}).Warn("Rejected streaming connection from untrusted network")
+			return status.Errorf(codes.PermissionDenied, "Connection not allowed from this network")
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"client_ip": clientIP.String(),
+			"method":    info.FullMethod,
+		}).Debug("Accepted streaming connection from trusted network")
+
+		return handler(srv, ss)
+	}
+}
+
 func main() {
 	// Validate configuration
 	if _, err := os.Stat(Config.WatchDir); os.IsNotExist(err) {
@@ -158,6 +304,14 @@ func main() {
 		log.Printf("Warning: Failed to set PR_SET_NO_NEW_PRIVS: %v", err)
 	}
 
+	// Parse trusted networks
+	trustedNets, err := parseTrustedNetworks(Config.TrustedNetworks)
+	if err != nil {
+		log.Fatalf("Failed to parse trusted networks: %v", err)
+	}
+
+	logrus.WithField("trusted_networks", Config.TrustedNetworks).Info("Configured trusted networks")
+
 	// By default, use TLS for production
 	var grpcServer *grpc.Server
 	var lis net.Listener
@@ -166,18 +320,24 @@ func main() {
 	devMode := os.Getenv("DEV_MODE") == "true"
 	prodEnv := os.Getenv("ENVIRONMENT") == "production" || os.Getenv("ENV") == "production"
 
+	// Create server options with network validation
+	serverOpts := []grpc.ServerOption{
+		grpc.UnaryInterceptor(trustedNetworkInterceptor(trustedNets)),
+		grpc.StreamInterceptor(trustedNetworkStreamInterceptor(trustedNets)),
+	}
+
 	// Never allow insecure mode in production, regardless of DEV_MODE setting
 	if devMode && !prodEnv {
 		log.Println("⚠️ WARNING: Ejecutando en modo desarrollo sin TLS. NO USAR EN PRODUCCIÓN. ⚠️")
 		log.Println("⚠️ Las conexiones inseguras están limitadas ÚNICAMENTE a localhost (127.0.0.1) ⚠️")
 
-		// Only bind to localhost for insecure connections
-		lis, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", Config.GRPCPort))
+		// In dev mode, bind to all interfaces for easier testing
+		lis, err = net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", Config.GRPCPort))
 		if err != nil {
 			log.Fatalf("Failed to listen: %v", err)
 		}
 
-		grpcServer = grpc.NewServer()
+		grpcServer = grpc.NewServer(serverOpts...)
 	} else {
 		// Always use TLS for production or if dev mode is not explicitly enabled
 		if devMode && prodEnv {
@@ -200,7 +360,8 @@ func main() {
 		Config.TLSConfig.Certificates = []tls.Certificate{cert}
 
 		creds := credentials.NewTLS(Config.TLSConfig)
-		grpcServer = grpc.NewServer(grpc.Creds(creds))
+		serverOpts = append(serverOpts, grpc.Creds(creds))
+		grpcServer = grpc.NewServer(serverOpts...)
 	}
 
 	// Create and register the filesystem service

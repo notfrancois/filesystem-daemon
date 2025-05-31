@@ -6,7 +6,7 @@ services:
         # Override build args for development
         build:
             args:
-                - BUILD_VERSION=dev-${USER:-unknown}
+                - BUILD_VERSION=${BUILD_VERSION:-dev}
 
         # Development environment variables
         environment:
@@ -42,8 +42,8 @@ services:
         deploy:
             resources: {}
 
-        # Override user for development (run as current user)
-        user: "${UID:-1000}:${GID:-1000}"
+        # Use root for development to avoid permission issues
+        user: "0:0"
 
         # Override health check for development
         healthcheck:
