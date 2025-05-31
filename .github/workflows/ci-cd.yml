@@ -230,8 +230,13 @@ jobs:
                   cp ./filesystem-daemon_*.deb /tmp/packages/pool/${COMPONENT}/
 
                   # Generar y firmar Packages
-                  apt-ftparchive packages /tmp/packages/pool/${COMPONENT} > /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
                   cd /tmp/packages
+                  apt-ftparchive packages --db /tmp/packages.db \
+                    --arch amd64 \
+                    --output-dir /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH} \
+                    --path-prefix "" \
+                    pool/${COMPONENT} > /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
+
                   gzip -9c dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages > dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz
                   gpg --clearsign --batch --yes -o dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
 
