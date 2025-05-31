@@ -210,8 +210,9 @@ jobs:
 
             - name: Update apt key
               run: |
-                  # Subir la clave pública a S3
-                  aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/apt/ --acl public-read
+                  # Subir la clave pública a S3 en la ubicación correcta para el Dockerfile
+                  aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/apt/apt.key --acl public-read
+                  # Mantener la copia adicional para compatibilidad
                   aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/pub.key --acl public-read
 
             - name: Publish package to S3
@@ -231,11 +232,8 @@ jobs:
 
                   # Generar y firmar Packages
                   cd /tmp/packages
-                  apt-ftparchive packages --db /tmp/packages.db \
-                    --arch amd64 \
-                    --output-dir /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH} \
-                    --path-prefix "" \
-                    pool/${COMPONENT} > /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
+                  apt-ftparchive packages --arch amd64 \
+                    pool/${COMPONENT} > dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
 
                   gzip -9c dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages > dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz
                   gpg --clearsign --batch --yes -o dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
@@ -254,7 +252,6 @@ jobs:
                   EOF
 
                   # Generar Release usando la configuración
-                  cd /tmp/packages
                   apt-ftparchive -c /tmp/apt-ftparchive.conf release dists/${DISTRIBUTION} > dists/${DISTRIBUTION}/Release
 
                   # Firmar Release (crear InRelease y Release.gpg)
@@ -270,3 +267,8 @@ jobs:
                   aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/Release s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release --acl public-read
                   aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/InRelease s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/InRelease --acl public-read
                   aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/Release.gpg s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release.gpg --acl public-read
+            - name: Update S3 Cache Settings
+              run: |
+                  # Configurar cache-control para archivos de metadatos
+                  aws s3 cp s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release \
+                    --metadata-directive REPLACE --cache-control "max-age=300" --acl public-read
