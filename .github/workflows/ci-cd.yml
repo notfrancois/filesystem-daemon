@@ -166,115 +166,63 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.AWS_REGION }}
 
-            - name: Configure GPG
+            - name: Configure GPG environment
               run: |
-                  # Limpiar completamente cualquier configuración GPG existente
-                  rm -rf ~/.gnupg
+                  # Eliminar cualquier configuración existente
+                  sudo rm -rf ~/.gnupg
+                  sudo rm -rf /root/.gnupg
 
-                  # Crear y configurar directorio .gnupg con permisos correctos
+                  # Crear directorios con permisos correctos
                   mkdir -p ~/.gnupg
+                  sudo mkdir -p /root/.gnupg
                   chmod 700 ~/.gnupg
+                  sudo chmod 700 /root/.gnupg
 
                   # Configuración básica de GPG
                   cat > ~/.gnupg/gpg.conf <<EOF
-                  no-tty
+                  use-agent
                   pinentry-mode loopback
+                  no-tty
                   EOF
+                  sudo cp ~/.gnupg/gpg.conf /root/.gnupg/
 
-                  # Configuración del agente GPG
+                  # Configuración del agente
                   cat > ~/.gnupg/gpg-agent.conf <<EOF
                   allow-loopback-pinentry
                   pinentry-program /usr/bin/pinentry-tty
                   default-cache-ttl 7200
                   max-cache-ttl 14400
                   EOF
+                  sudo cp ~/.gnupg/gpg-agent.conf /root/.gnupg/
 
-                  # Asegurarse de que no haya agentes GPG corriendo
-                  killall gpg-agent || true
-                  gpgconf --kill all || true
-
-                  # Esperar un momento para asegurarse de que todo esté detenido
+                  # Detener todos los agentes GPG
+                  sudo killall gpg-agent || true
+                  sudo gpgconf --kill all || true
                   sleep 2
 
-                  # Iniciar un nuevo agente GPG
-                  eval $(gpg-agent --daemon)
-
-                  # Importar la clave GPG privada
-                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --yes --import --pinentry-mode loopback
-
-                  # Establecer la confianza en la clave usando un archivo temporal
-                  echo -e "5\ny\nq\n" | gpg --command-fd 0 --no-tty --expert --edit-key "Filesystem Daemon Repo" trust
-
-            - name: Publish package to S3
+            - name: Import GPG key
               run: |
-                  # Buscar el paquete Debian generado
-                  echo "Buscando el paquete Debian generado..."
-                  find . -name "filesystem-daemon_*.deb" -type f
+                  # Reiniciar el agente GPG
+                  gpg-agent --daemon --homedir ~/.gnupg
 
-                  # Subir paquete (usar el path correcto)
-                  echo "Subiendo paquete a S3..."
-                  aws s3 cp ./filesystem-daemon_*.deb s3://${BUCKET_NAME}/pool/${COMPONENT}/ --acl public-read
+                  # Importar la clave privada
+                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import --pinentry-mode loopback
 
-                  # Crear estructura de directorios necesaria
-                  mkdir -p /tmp/packages/pool/${COMPONENT}
+                  # Establecer confianza ultimate en la clave
+                  gpg --batch --yes --command-fd 0 --expert --edit-key "Filesystem Daemon Repo" trust <<EOF
+                  5
+                  y
+                  quit
+                  EOF
 
-                  # Copiar el paquete .deb al directorio temporal
-                  cp ./filesystem-daemon_*.deb /tmp/packages/pool/${COMPONENT}/
-
-                  # Generar y firmar Packages
-                  apt-ftparchive packages /tmp/packages > /tmp/Packages
-                  gpg --clearsign -o /tmp/Packages.asc /tmp/Packages
-                  gpg --detach-sign -o /tmp/Packages.sig /tmp/Packages
-                  gzip -c /tmp/Packages > /tmp/Packages.gz
-
-                  # Subir índices actualizados
-                  aws s3 cp /tmp/Packages s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages --acl public-read
-                  aws s3 cp /tmp/Packages.gz s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz --acl public-read
-                  aws s3 cp /tmp/Packages.sig s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.sig --acl public-read
-                  aws s3 cp /tmp/Packages.asc s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc --acl public-read
-
-            - name: Update Release file
-              run: |
-                  # Generar Release
-                  cat > /tmp/Release <<EOL
-                  Origin: Filesystem Daemon Repo
-                  Label: Filesystem Daemon
-                  Suite: ${DISTRIBUTION}
-                  Codename: ${DISTRIBUTION}
-                  Date: $(date -R)
-                  Architectures: ${ARCH}
-                  Components: ${COMPONENT}
-                  Description: Filesystem Daemon Repository
-                  EOL
-
-                  # Subir Release
-                  aws s3 cp /tmp/Release s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release --acl public-read
+                  # Exportar la clave pública
+                  gpg --armor --export "Filesystem Daemon Repo" > /tmp/apt.key
+                  sudo cp /tmp/apt.key /root/apt.key
 
             - name: Update apt key
               run: |
-                  # Crear y configurar directorio .gnupg
-                  mkdir -p ~/.gnupg
-                  chmod 700 ~/.gnupg
-
-                  # Configurar el agente GPG
-                  echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
-                  echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
-                  gpgconf --kill gpg-agent
-                  gpg-agent --daemon
-
-                  # Importar la clave GPG privada desde el secreto (en formato base64)
-                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import --pinentry-mode loopback
-
-                  # Establecer la confianza en la clave
-                  echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key "Filesystem Daemon Repo" trust
-
-                  # Exportar la clave pública
-                  gpg --export -a "Filesystem Daemon Repo" > /tmp/apt.key
-
-                  # Subir la clave pública a S3 (ubicación principal para instalación)
+                  # Subir la clave pública a S3
                   aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/apt/ --acl public-read
-
-                  # También subir la clave a la raíz para mayor compatibilidad
                   aws s3 cp /tmp/apt.key s3://${BUCKET_NAME}/pub.key --acl public-read
 
             - name: Update apt configuration
