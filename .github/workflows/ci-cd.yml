@@ -129,6 +129,24 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.AWS_REGION }}
 
+            - name: Configure GPG
+              run: |
+                  # Crear y configurar directorio .gnupg
+                  mkdir -p ~/.gnupg
+                  chmod 700 ~/.gnupg
+
+                  # Configurar el agente GPG
+                  echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+                  echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
+                  gpgconf --kill gpg-agent
+                  gpg-agent --daemon
+
+                  # Importar la clave GPG privada desde el secreto
+                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import --pinentry-mode loopback
+
+                  # Establecer la confianza en la clave
+                  echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key "Filesystem Daemon Repo" trust
+
             - name: Publish package to S3
               run: |
                   # Buscar el paquete Debian generado
@@ -145,18 +163,17 @@ jobs:
                   # Copiar el paquete .deb al directorio temporal
                   cp ./filesystem-daemon_*.deb /tmp/packages/pool/${COMPONENT}/
 
-                  # Generar Packages.gz
+                  # Generar y firmar Packages
                   apt-ftparchive packages /tmp/packages > /tmp/Packages
-                  gzip -c /tmp/Packages > /tmp/Packages.gz
-
-                  # Firmar Packages
                   gpg --clearsign -o /tmp/Packages.asc /tmp/Packages
                   gpg --detach-sign -o /tmp/Packages.sig /tmp/Packages
+                  gzip -c /tmp/Packages > /tmp/Packages.gz
 
                   # Subir índices actualizados
                   aws s3 cp /tmp/Packages s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages --acl public-read
                   aws s3 cp /tmp/Packages.gz s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz --acl public-read
                   aws s3 cp /tmp/Packages.sig s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.sig --acl public-read
+                  aws s3 cp /tmp/Packages.asc s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc --acl public-read
 
             - name: Update Release file
               run: |
