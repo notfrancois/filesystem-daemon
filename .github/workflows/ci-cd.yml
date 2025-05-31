@@ -23,19 +23,66 @@ env:
     SAST_ENABLED: true
     DEPSCAN_ENABLED: true
     LICENSE_CHECK: true
+    GO_VERSION: "1.24"
+
 jobs:
     build:
         runs-on: ubuntu-latest
+
+        # Configurar el caché para apt
+        env:
+            APT_CACHE_DIR: /tmp/apt-cache
+
         steps:
             - uses: actions/checkout@v3
+
+            # Configurar caché para apt
+            - name: Cache apt packages
+              uses: actions/cache@v3
+              with:
+                  path: ${{ env.APT_CACHE_DIR }}
+                  key: ${{ runner.os }}-apt-${{ hashFiles('**/debian/control') }}
+                  restore-keys: |
+                      ${{ runner.os }}-apt-
+
+            # Configurar caché para Go
+            - name: Cache Go modules and build
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/go/pkg/mod
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go-
 
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go-version: "1.24"
+                  go-version: ${{ env.GO_VERSION }}
+                  cache: true
 
             - name: Install dependencies
-              run: go mod tidy
+              run: |
+                  # Configurar directorio de caché para apt
+                  sudo mkdir -p ${{ env.APT_CACHE_DIR }}
+                  sudo mount --bind ${{ env.APT_CACHE_DIR }} /var/cache/apt/archives
+
+                  # Instalar dependencias
+                  sudo apt-get update
+                  sudo apt-get install -y --no-install-recommends \
+                      build-essential \
+                      debhelper \
+                      dh-make \
+                      libseccomp-dev \
+                      libsystemd-dev \
+                      libcap-dev \
+                      libaudit-dev \
+                      protobuf-compiler
+
+                  # Instalar dependencias de Go
+                  go mod download
+                  go mod verify
 
             - name: Install Protobuf Compiler
               run: |
@@ -99,16 +146,6 @@ jobs:
 
             - name: Create Debian package
               run: |
-                  # Instalar herramientas necesarias
-                  sudo apt-get update
-                  sudo apt-get install -y build-essential debhelper dh-make \
-                      libseccomp-dev libsystemd-dev libcap-dev libaudit-dev
-
-                  # Instalar Go desde la fuente oficial
-                  wget https://go.dev/dl/go1.24.3.linux-amd64.tar.gz
-                  sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.24.3.linux-amd64.tar.gz
-                  echo "export PATH=$PATH:/usr/local/go/bin" >> $GITHUB_ENV
-
                   # Crear directorio temporal
                   mkdir -p build
                   cp -r debian build/
