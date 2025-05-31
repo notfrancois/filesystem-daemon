@@ -134,21 +134,21 @@ jobs:
                   # Buscar el paquete Debian generado
                   echo "Buscando el paquete Debian generado..."
                   find . -name "filesystem-daemon_*.deb" -type f
-                  
+
                   # Subir paquete (usar el path correcto)
                   echo "Subiendo paquete a S3..."
                   aws s3 cp ./filesystem-daemon_*.deb s3://${BUCKET_NAME}/pool/${COMPONENT}/ --acl public-read
 
                   # Crear estructura de directorios necesaria
                   mkdir -p /tmp/packages/pool/${COMPONENT}
-                  
+
                   # Copiar el paquete .deb al directorio temporal
                   cp ./filesystem-daemon_*.deb /tmp/packages/pool/${COMPONENT}/
-                  
+
                   # Generar Packages.gz
                   apt-ftparchive packages /tmp/packages > /tmp/Packages
                   gzip -c /tmp/Packages > /tmp/Packages.gz
-                  
+
                   # Firmar Packages
                   gpg --clearsign -o /tmp/Packages.asc /tmp/Packages
                   gpg --detach-sign -o /tmp/Packages.sig /tmp/Packages
@@ -177,8 +177,21 @@ jobs:
 
             - name: Update apt key
               run: |
+                  # Crear y configurar directorio .gnupg
+                  mkdir -p ~/.gnupg
+                  chmod 700 ~/.gnupg
+
+                  # Configurar el agente GPG
+                  echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+                  echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
+                  gpgconf --kill gpg-agent
+                  gpg-agent --daemon
+
                   # Importar la clave GPG privada desde el secreto (en formato base64)
-                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
+                  echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import --pinentry-mode loopback
+
+                  # Establecer la confianza en la clave
+                  echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key "Filesystem Daemon Repo" trust
 
                   # Exportar la clave pública
                   gpg --export -a "Filesystem Daemon Repo" > /tmp/apt.key
