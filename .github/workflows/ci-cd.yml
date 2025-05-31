@@ -226,16 +226,29 @@ jobs:
 
                   # Crear estructura de directorios necesaria
                   mkdir -p /tmp/packages/pool/${COMPONENT}
+                  mkdir -p /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}
                   cp ./filesystem-daemon_*.deb /tmp/packages/pool/${COMPONENT}/
 
                   # Generar y firmar Packages
-                  apt-ftparchive packages /tmp/packages > /tmp/Packages
-                  gpg --clearsign -o /tmp/Packages.asc /tmp/Packages
-                  gpg --detach-sign -o /tmp/Packages.sig /tmp/Packages
-                  gzip -c /tmp/Packages > /tmp/Packages.gz
+                  apt-ftparchive packages /tmp/packages/pool/${COMPONENT} > /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
+                  cd /tmp/packages
+                  gzip -9c dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages > dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz
+                  gpg --clearsign --batch --yes -o dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
+
+                  # Generar Release
+                  cd /tmp/packages
+                  apt-ftparchive release dists/${DISTRIBUTION} > dists/${DISTRIBUTION}/Release
+                  
+                  # Firmar Release (crear InRelease)
+                  gpg --clearsign --batch --yes -o dists/${DISTRIBUTION}/InRelease dists/${DISTRIBUTION}/Release
+                  gpg -abs --batch --yes -o dists/${DISTRIBUTION}/Release.gpg dists/${DISTRIBUTION}/Release
 
                   # Subir índices actualizados
-                  aws s3 cp /tmp/Packages s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages --acl public-read
-                  aws s3 cp /tmp/Packages.gz s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz --acl public-read
-                  aws s3 cp /tmp/Packages.sig s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.sig --acl public-read
-                  aws s3 cp /tmp/Packages.asc s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc --acl public-read
+                  aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages --acl public-read
+                  aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz --acl public-read
+                  aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc --acl public-read
+                  
+                  # Subir archivos Release e InRelease
+                  aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/Release s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release --acl public-read
+                  aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/InRelease s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/InRelease --acl public-read
+                  aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/Release.gpg s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release.gpg --acl public-read
