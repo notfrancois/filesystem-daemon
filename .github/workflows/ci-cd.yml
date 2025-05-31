@@ -235,11 +235,24 @@ jobs:
                   gzip -9c dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages > dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz
                   gpg --clearsign --batch --yes -o dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages
 
-                  # Generar Release
+                  # Crear configuración de apt-ftparchive
+                  cat > /tmp/apt-ftparchive.conf <<EOF
+                  APT::FTPArchive::Release {
+                    Origin "Filesystem Daemon Repository";
+                    Label "Filesystem Daemon";
+                    Suite "stable";
+                    Codename "stable";
+                    Architectures "amd64";
+                    Components "main";
+                    Description "Filesystem Daemon APT Repository";
+                  };
+                  EOF
+
+                  # Generar Release usando la configuración
                   cd /tmp/packages
-                  apt-ftparchive release dists/${DISTRIBUTION} > dists/${DISTRIBUTION}/Release
-                  
-                  # Firmar Release (crear InRelease)
+                  apt-ftparchive -c /tmp/apt-ftparchive.conf release dists/${DISTRIBUTION} > dists/${DISTRIBUTION}/Release
+
+                  # Firmar Release (crear InRelease y Release.gpg)
                   gpg --clearsign --batch --yes -o dists/${DISTRIBUTION}/InRelease dists/${DISTRIBUTION}/Release
                   gpg -abs --batch --yes -o dists/${DISTRIBUTION}/Release.gpg dists/${DISTRIBUTION}/Release
 
@@ -247,7 +260,7 @@ jobs:
                   aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages --acl public-read
                   aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.gz --acl public-read
                   aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/${COMPONENT}/binary-${ARCH}/Packages.asc --acl public-read
-                  
+
                   # Subir archivos Release e InRelease
                   aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/Release s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/Release --acl public-read
                   aws s3 cp /tmp/packages/dists/${DISTRIBUTION}/InRelease s3://${BUCKET_NAME}/dists/${DISTRIBUTION}/InRelease --acl public-read
