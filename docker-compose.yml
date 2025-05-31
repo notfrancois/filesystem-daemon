@@ -1,0 +1,89 @@
+version: "3.8"
+
+services:
+    filesystem-daemon:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                - BUILD_VERSION=${BUILD_VERSION:-dev}
+        image: filesystem-daemon:${BUILD_VERSION:-latest}
+        container_name: filesystem-daemon
+        volumes:
+            - type: bind
+              source: ${ASSETS_PATH:-./assets}
+              target: /var/www/html
+              bind:
+                  propagation: shared
+            - type: bind
+              source: ${CERTS_PATH:-./certs}
+              target: /etc/filesystem-daemon/certs
+              read_only: true
+            # Optional: dedicated log volume
+            - filesystem-logs:/var/log/filesystem-daemon
+        ports:
+            - "${GRPC_PORT:-50051}:50051"
+            - "${HEALTH_PORT:-50052}:50052"
+        environment:
+            # Runtime configuration
+            - ENVIRONMENT=${ENVIRONMENT:-production}
+            - LOG_LEVEL=${LOG_LEVEL:-info}
+            - LOG_FORMAT=${LOG_FORMAT:-json}
+
+            # Permission management for legacy web servers
+            - WEB_SERVER_UID=${WEB_SERVER_UID:-33} # www-data default
+            - WEB_SERVER_GID=${WEB_SERVER_GID:-33} # www-data default
+            - DEFAULT_FILE_MODE=${DEFAULT_FILE_MODE:-0644}
+            - DEFAULT_DIR_MODE=${DEFAULT_DIR_MODE:-0755}
+
+            # Asset management settings
+            - MAX_FILE_SIZE=${MAX_FILE_SIZE:-100MB}
+            - ALLOWED_EXTENSIONS=${ALLOWED_EXTENSIONS:-jpg,jpeg,png,gif,svg,css,js,html,txt,pdf}
+            - WATCH_CHANGES=${WATCH_CHANGES:-true}
+
+            # Security settings
+            - TLS_ENABLED=${TLS_ENABLED:-true}
+            - TRUSTED_NETWORKS=${TRUSTED_NETWORKS:-127.0.0.1/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+
+        # Run as configurable user for legacy compatibility
+        user: "${WEB_SERVER_UID:-33}:${WEB_SERVER_GID:-33}"
+
+        restart: unless-stopped
+
+        # Resource limits
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+                    cpus: "0.5"
+                reservations:
+                    memory: 128M
+                    cpus: "0.1"
+
+        # Health check
+        healthcheck:
+            test: ["CMD", "/usr/local/bin/filesystem-daemon", "-health-check"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
+
+        # Security options
+        security_opt:
+            - no-new-privileges:true
+
+        # Read-only root filesystem for security
+        read_only: true
+
+        # Temporary filesystems for runtime data
+        tmpfs:
+            - /tmp:noexec,nosuid,size=100m
+            - /var/run:noexec,nosuid,size=10m
+
+volumes:
+    filesystem-logs:
+        driver: local
+
+networks:
+    default:
+        driver: bridge

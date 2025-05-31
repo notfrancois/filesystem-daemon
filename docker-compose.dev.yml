@@ -1,0 +1,91 @@
+# Development overrides for docker-compose.yml
+version: "3.8"
+
+services:
+    filesystem-daemon:
+        # Override build args for development
+        build:
+            args:
+                - BUILD_VERSION=dev-${USER:-unknown}
+
+        # Development environment variables
+        environment:
+            - ENVIRONMENT=development
+            - DEV_MODE=true
+            - LOG_LEVEL=debug
+            - LOG_FORMAT=text
+            - TLS_ENABLED=false # Disable TLS for local development
+
+        # Override ports for development (no TLS)
+        ports:
+            - "50051:50051" # gRPC without TLS
+            - "50052:50052" # Health check
+
+        # Mount source code for live reloading (if needed)
+        volumes:
+            - type: bind
+              source: ${ASSETS_PATH:-./dev-assets}
+              target: /var/www/html
+              bind:
+                  propagation: shared
+            # Override certs path for development
+            - type: bind
+              source: ${CERTS_PATH:-./dev-certs}
+              target: /etc/filesystem-daemon/certs
+              read_only: false
+
+        # Remove security restrictions for development
+        security_opt: []
+        read_only: false
+
+        # Remove resource limits for development
+        deploy:
+            resources: {}
+
+        # Override user for development (run as current user)
+        user: "${UID:-1000}:${GID:-1000}"
+
+        # Override health check for development
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "curl",
+                    "-f",
+                    "http://localhost:50052/health",
+                    "||",
+                    "exit",
+                    "1",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 2
+            start_period: 5s
+
+        # Override command for development with hot reload
+        command:
+            [
+                "/usr/local/bin/filesystem-daemon",
+                "--watch-dir=/var/www/html",
+                "--grpc-port=50051",
+                "--tls=false",
+            ]
+
+    # Optional: Add nginx for testing legacy web server compatibility
+    dev-nginx:
+        image: nginx:alpine
+        ports:
+            - "8080:80"
+        volumes:
+            - type: bind
+              source: ${ASSETS_PATH:-./dev-assets}
+              target: /usr/share/nginx/html
+              read_only: true
+        environment:
+            - NGINX_HOST=localhost
+            - NGINX_PORT=80
+
+# Development-specific volumes
+volumes:
+    dev-assets:
+        driver: local

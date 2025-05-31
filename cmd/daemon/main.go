@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,16 +22,27 @@ import (
 
 	"github.com/notfrancois/filesystem-daemon/proto"
 	"github.com/notfrancois/filesystem-daemon/service"
+	"github.com/sirupsen/logrus"
 )
 
-// Config contains the daemon configuration
+// Enhanced config structure for Docker deployment
 var Config struct {
-	WatchDir     string
-	GRPCPort     int
-	TLSConfig    *tls.Config
-	CertFile     string
-	KeyFile      string
-	TLSEnabled   bool
+	WatchDir        string
+	GRPCPort        int
+	HealthPort      int
+	TLSConfig       *tls.Config
+	CertFile        string
+	KeyFile         string
+	TLSEnabled      bool
+	DefaultFileMode os.FileMode
+	DefaultDirMode  os.FileMode
+	WebServerUID    int
+	WebServerGID    int
+	LogLevel        string
+	LogFormat       string
+	MaxFileSize     int64
+	AllowedExts     []string
+	TrustedNetworks []string
 }
 
 func init() {
@@ -39,6 +52,12 @@ func init() {
 	Config.CertFile = "/etc/filesystem-daemon/certs/server.crt"
 	Config.KeyFile = "/etc/filesystem-daemon/certs/server.key"
 	Config.TLSEnabled = true
+
+	// Nuevas configuraciones para permisos
+	Config.DefaultFileMode = 0644 // Permisos por defecto para archivos
+	Config.DefaultDirMode = 0755  // Permisos por defecto para directorios
+	Config.WebServerUID = 33      // Usuario del servidor web
+	Config.WebServerGID = 33      // Grupo del servidor web
 
 	// Command line flags
 	flag.StringVar(&Config.WatchDir, "watch-dir", Config.WatchDir, "Directory to watch")
@@ -58,6 +77,62 @@ func init() {
 			tls.TLS_CHACHA20_POLY1305_SHA256,
 		},
 	}
+
+	// Enhanced configuration from environment
+	Config.HealthPort = getEnvInt("HEALTH_PORT", 50052)
+	Config.LogLevel = getEnv("LOG_LEVEL", "info")
+	Config.LogFormat = getEnv("LOG_FORMAT", "json")
+	Config.MaxFileSize = parseSize(getEnv("MAX_FILE_SIZE", "100MB"))
+	Config.AllowedExts = strings.Split(getEnv("ALLOWED_EXTENSIONS", "jpg,jpeg,png,gif,svg,css,js,html,txt,pdf"), ",")
+	Config.TrustedNetworks = strings.Split(getEnv("TRUSTED_NETWORKS", "127.0.0.1/8,10.0.0.0/8"), ",")
+
+	// Setup structured logging
+	setupLogging()
+}
+
+func setupLogging() {
+	level, err := logrus.ParseLevel(Config.LogLevel)
+	if err != nil {
+		level = logrus.InfoLevel
+	}
+	logrus.SetLevel(level)
+
+	if Config.LogFormat == "json" {
+		logrus.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: time.RFC3339,
+			FieldMap: logrus.FieldMap{
+				logrus.FieldKeyTime:  "timestamp",
+				logrus.FieldKeyLevel: "level",
+				logrus.FieldKeyMsg:   "message",
+			},
+		})
+	}
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+func getEnvInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intValue, err := strconv.Atoi(value); err == nil {
+			return intValue
+		}
+	}
+	return defaultValue
+}
+
+func parseSize(sizeStr string) int64 {
+	// Simple size parser for MB/GB
+	if strings.HasSuffix(sizeStr, "MB") {
+		if size, err := strconv.ParseInt(strings.TrimSuffix(sizeStr, "MB"), 10, 64); err == nil {
+			return size * 1024 * 1024
+		}
+	}
+	return 100 * 1024 * 1024 // Default 100MB
 }
 
 func main() {
@@ -73,9 +148,9 @@ func main() {
 	}
 	Config.WatchDir = absPath
 
-	// Set secure file permissions
-	if err := os.Chmod(Config.WatchDir, 0750); err != nil {
-		log.Printf("Warning: Failed to set permissions on watch directory: %v", err)
+	// Set up proper permissions for Docker volume mounts
+	if err := setupVolumePermissions(); err != nil {
+		logrus.WithError(err).Warn("Failed to setup volume permissions")
 	}
 
 	// Initialize security context
@@ -120,10 +195,10 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to load TLS certificates: %v", err)
 		}
-		
+
 		// Update TLS config with the certificates
 		Config.TLSConfig.Certificates = []tls.Certificate{cert}
-		
+
 		creds := credentials.NewTLS(Config.TLSConfig)
 		grpcServer = grpc.NewServer(grpc.Creds(creds))
 	}
@@ -203,4 +278,27 @@ func main() {
 	log.Printf("Received shutdown signal %v. Graceful shutdown...", sig)
 	grpcServer.GracefulStop()
 	log.Printf("Shutdown complete")
+}
+
+func setupVolumePermissions() error {
+	// Ensure the watch directory has correct ownership for web server compatibility
+	uid := Config.WebServerUID
+	gid := Config.WebServerGID
+
+	if err := os.Chown(Config.WatchDir, uid, gid); err != nil {
+		return fmt.Errorf("failed to set ownership on %s: %w", Config.WatchDir, err)
+	}
+
+	if err := os.Chmod(Config.WatchDir, Config.DefaultDirMode); err != nil {
+		return fmt.Errorf("failed to set permissions on %s: %w", Config.WatchDir, err)
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"path": Config.WatchDir,
+		"uid":  uid,
+		"gid":  gid,
+		"mode": Config.DefaultDirMode,
+	}).Info("Volume permissions configured")
+
+	return nil
 }

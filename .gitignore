@@ -50,3 +50,6 @@ trivy-results.sarif
 
 fsdaemon
 filesystem-daemon
+
+dev-assets/
+dev-certs/
