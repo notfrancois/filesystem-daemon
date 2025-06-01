@@ -21,6 +21,154 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Enums for file operations
+type FileOpenMode int32
+
+const (
+	FileOpenMode_READ_ONLY  FileOpenMode = 0
+	FileOpenMode_WRITE_ONLY FileOpenMode = 1
+	FileOpenMode_READ_WRITE FileOpenMode = 2
+)
+
+// Enum value maps for FileOpenMode.
+var (
+	FileOpenMode_name = map[int32]string{
+		0: "READ_ONLY",
+		1: "WRITE_ONLY",
+		2: "READ_WRITE",
+	}
+	FileOpenMode_value = map[string]int32{
+		"READ_ONLY":  0,
+		"WRITE_ONLY": 1,
+		"READ_WRITE": 2,
+	}
+)
+
+func (x FileOpenMode) Enum() *FileOpenMode {
+	p := new(FileOpenMode)
+	*p = x
+	return p
+}
+
+func (x FileOpenMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FileOpenMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_filesystem_proto_enumTypes[0].Descriptor()
+}
+
+func (FileOpenMode) Type() protoreflect.EnumType {
+	return &file_proto_filesystem_proto_enumTypes[0]
+}
+
+func (x FileOpenMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FileOpenMode.Descriptor instead.
+func (FileOpenMode) EnumDescriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{0}
+}
+
+type LineOperation int32
+
+const (
+	LineOperation_REPLACE       LineOperation = 0
+	LineOperation_INSERT_BEFORE LineOperation = 1
+	LineOperation_INSERT_AFTER  LineOperation = 2
+	LineOperation_DELETE        LineOperation = 3
+)
+
+// Enum value maps for LineOperation.
+var (
+	LineOperation_name = map[int32]string{
+		0: "REPLACE",
+		1: "INSERT_BEFORE",
+		2: "INSERT_AFTER",
+		3: "DELETE",
+	}
+	LineOperation_value = map[string]int32{
+		"REPLACE":       0,
+		"INSERT_BEFORE": 1,
+		"INSERT_AFTER":  2,
+		"DELETE":        3,
+	}
+)
+
+func (x LineOperation) Enum() *LineOperation {
+	p := new(LineOperation)
+	*p = x
+	return p
+}
+
+func (x LineOperation) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LineOperation) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_filesystem_proto_enumTypes[1].Descriptor()
+}
+
+func (LineOperation) Type() protoreflect.EnumType {
+	return &file_proto_filesystem_proto_enumTypes[1]
+}
+
+func (x LineOperation) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LineOperation.Descriptor instead.
+func (LineOperation) EnumDescriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{1}
+}
+
+type LockType int32
+
+const (
+	LockType_SHARED    LockType = 0
+	LockType_EXCLUSIVE LockType = 1
+)
+
+// Enum value maps for LockType.
+var (
+	LockType_name = map[int32]string{
+		0: "SHARED",
+		1: "EXCLUSIVE",
+	}
+	LockType_value = map[string]int32{
+		"SHARED":    0,
+		"EXCLUSIVE": 1,
+	}
+)
+
+func (x LockType) Enum() *LockType {
+	p := new(LockType)
+	*p = x
+	return p
+}
+
+func (x LockType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LockType) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_filesystem_proto_enumTypes[2].Descriptor()
+}
+
+func (LockType) Type() protoreflect.EnumType {
+	return &file_proto_filesystem_proto_enumTypes[2]
+}
+
+func (x LockType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LockType.Descriptor instead.
+func (LockType) EnumDescriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{2}
+}
+
 // ListRequest specifies a directory to list
 type ListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1107,6 +1255,895 @@ func (x *HierarchyResponse) GetTruncated() bool {
 	return false
 }
 
+// OpenFileRequest for opening a file for editing
+type OpenFileRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Path              string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Mode              FileOpenMode           `protobuf:"varint,2,opt,name=mode,proto3,enum=filesystem.FileOpenMode" json:"mode,omitempty"` // Read, Write, ReadWrite
+	CreateIfNotExists bool                   `protobuf:"varint,3,opt,name=create_if_not_exists,json=createIfNotExists,proto3" json:"create_if_not_exists,omitempty"`
+	ExclusiveLock     bool                   `protobuf:"varint,4,opt,name=exclusive_lock,json=exclusiveLock,proto3" json:"exclusive_lock,omitempty"` // Request exclusive lock
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *OpenFileRequest) Reset() {
+	*x = OpenFileRequest{}
+	mi := &file_proto_filesystem_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OpenFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OpenFileRequest) ProtoMessage() {}
+
+func (x *OpenFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OpenFileRequest.ProtoReflect.Descriptor instead.
+func (*OpenFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *OpenFileRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *OpenFileRequest) GetMode() FileOpenMode {
+	if x != nil {
+		return x.Mode
+	}
+	return FileOpenMode_READ_ONLY
+}
+
+func (x *OpenFileRequest) GetCreateIfNotExists() bool {
+	if x != nil {
+		return x.CreateIfNotExists
+	}
+	return false
+}
+
+func (x *OpenFileRequest) GetExclusiveLock() bool {
+	if x != nil {
+		return x.ExclusiveLock
+	}
+	return false
+}
+
+// OpenFileResponse returns file handle and metadata
+type OpenFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	FileHandle    string                 `protobuf:"bytes,2,opt,name=file_handle,json=fileHandle,proto3" json:"file_handle,omitempty"` // Unique handle for this open session
+	FileInfo      *FileInfo              `protobuf:"bytes,3,opt,name=file_info,json=fileInfo,proto3" json:"file_info,omitempty"`       // File metadata
+	LockId        string                 `protobuf:"bytes,4,opt,name=lock_id,json=lockId,proto3" json:"lock_id,omitempty"`             // Lock identifier if locked
+	Error         string                 `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OpenFileResponse) Reset() {
+	*x = OpenFileResponse{}
+	mi := &file_proto_filesystem_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OpenFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OpenFileResponse) ProtoMessage() {}
+
+func (x *OpenFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OpenFileResponse.ProtoReflect.Descriptor instead.
+func (*OpenFileResponse) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *OpenFileResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *OpenFileResponse) GetFileHandle() string {
+	if x != nil {
+		return x.FileHandle
+	}
+	return ""
+}
+
+func (x *OpenFileResponse) GetFileInfo() *FileInfo {
+	if x != nil {
+		return x.FileInfo
+	}
+	return nil
+}
+
+func (x *OpenFileResponse) GetLockId() string {
+	if x != nil {
+		return x.LockId
+	}
+	return ""
+}
+
+func (x *OpenFileResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// CloseFileRequest for closing an open file
+type CloseFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FileHandle    string                 `protobuf:"bytes,1,opt,name=file_handle,json=fileHandle,proto3" json:"file_handle,omitempty"`
+	SaveChanges   bool                   `protobuf:"varint,2,opt,name=save_changes,json=saveChanges,proto3" json:"save_changes,omitempty"` // Whether to save pending changes
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloseFileRequest) Reset() {
+	*x = CloseFileRequest{}
+	mi := &file_proto_filesystem_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloseFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloseFileRequest) ProtoMessage() {}
+
+func (x *CloseFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloseFileRequest.ProtoReflect.Descriptor instead.
+func (*CloseFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *CloseFileRequest) GetFileHandle() string {
+	if x != nil {
+		return x.FileHandle
+	}
+	return ""
+}
+
+func (x *CloseFileRequest) GetSaveChanges() bool {
+	if x != nil {
+		return x.SaveChanges
+	}
+	return false
+}
+
+// FileContentResponse returns file content as text
+type FileContentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`                       // File content as string
+	Encoding      string                 `protobuf:"bytes,3,opt,name=encoding,proto3" json:"encoding,omitempty"`                     // File encoding (utf-8, ascii, etc.)
+	LineCount     int32                  `protobuf:"varint,4,opt,name=line_count,json=lineCount,proto3" json:"line_count,omitempty"` // Total number of lines
+	Size          int64                  `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`                            // File size in bytes
+	Error         string                 `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FileContentResponse) Reset() {
+	*x = FileContentResponse{}
+	mi := &file_proto_filesystem_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileContentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileContentResponse) ProtoMessage() {}
+
+func (x *FileContentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileContentResponse.ProtoReflect.Descriptor instead.
+func (*FileContentResponse) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *FileContentResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *FileContentResponse) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *FileContentResponse) GetEncoding() string {
+	if x != nil {
+		return x.Encoding
+	}
+	return ""
+}
+
+func (x *FileContentResponse) GetLineCount() int32 {
+	if x != nil {
+		return x.LineCount
+	}
+	return 0
+}
+
+func (x *FileContentResponse) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *FileContentResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// WriteFileContentRequest for writing entire file content
+type WriteFileContentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	FileHandle    string                 `protobuf:"bytes,2,opt,name=file_handle,json=fileHandle,proto3" json:"file_handle,omitempty"`        // Optional: if file is open
+	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`                                // New file content
+	Encoding      string                 `protobuf:"bytes,4,opt,name=encoding,proto3" json:"encoding,omitempty"`                              // Content encoding
+	CreateBackup  bool                   `protobuf:"varint,5,opt,name=create_backup,json=createBackup,proto3" json:"create_backup,omitempty"` // Create backup before writing
+	Truncate      bool                   `protobuf:"varint,6,opt,name=truncate,proto3" json:"truncate,omitempty"`                             // Truncate file before writing
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WriteFileContentRequest) Reset() {
+	*x = WriteFileContentRequest{}
+	mi := &file_proto_filesystem_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WriteFileContentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WriteFileContentRequest) ProtoMessage() {}
+
+func (x *WriteFileContentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WriteFileContentRequest.ProtoReflect.Descriptor instead.
+func (*WriteFileContentRequest) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *WriteFileContentRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *WriteFileContentRequest) GetFileHandle() string {
+	if x != nil {
+		return x.FileHandle
+	}
+	return ""
+}
+
+func (x *WriteFileContentRequest) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *WriteFileContentRequest) GetEncoding() string {
+	if x != nil {
+		return x.Encoding
+	}
+	return ""
+}
+
+func (x *WriteFileContentRequest) GetCreateBackup() bool {
+	if x != nil {
+		return x.CreateBackup
+	}
+	return false
+}
+
+func (x *WriteFileContentRequest) GetTruncate() bool {
+	if x != nil {
+		return x.Truncate
+	}
+	return false
+}
+
+// GetFileLinesRequest for reading specific lines
+type GetFileLinesRequest struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Path               string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	FileHandle         string                 `protobuf:"bytes,2,opt,name=file_handle,json=fileHandle,proto3" json:"file_handle,omitempty"` // Optional: if file is open
+	StartLine          int32                  `protobuf:"varint,3,opt,name=start_line,json=startLine,proto3" json:"start_line,omitempty"`   // Starting line number (1-based)
+	EndLine            int32                  `protobuf:"varint,4,opt,name=end_line,json=endLine,proto3" json:"end_line,omitempty"`         // Ending line number (0 for end of file)
+	IncludeLineNumbers bool                   `protobuf:"varint,5,opt,name=include_line_numbers,json=includeLineNumbers,proto3" json:"include_line_numbers,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *GetFileLinesRequest) Reset() {
+	*x = GetFileLinesRequest{}
+	mi := &file_proto_filesystem_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFileLinesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFileLinesRequest) ProtoMessage() {}
+
+func (x *GetFileLinesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFileLinesRequest.ProtoReflect.Descriptor instead.
+func (*GetFileLinesRequest) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *GetFileLinesRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *GetFileLinesRequest) GetFileHandle() string {
+	if x != nil {
+		return x.FileHandle
+	}
+	return ""
+}
+
+func (x *GetFileLinesRequest) GetStartLine() int32 {
+	if x != nil {
+		return x.StartLine
+	}
+	return 0
+}
+
+func (x *GetFileLinesRequest) GetEndLine() int32 {
+	if x != nil {
+		return x.EndLine
+	}
+	return 0
+}
+
+func (x *GetFileLinesRequest) GetIncludeLineNumbers() bool {
+	if x != nil {
+		return x.IncludeLineNumbers
+	}
+	return false
+}
+
+// FileLinesResponse returns specific lines from file
+type FileLinesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Lines         []*FileLine            `protobuf:"bytes,2,rep,name=lines,proto3" json:"lines,omitempty"`
+	TotalLines    int32                  `protobuf:"varint,3,opt,name=total_lines,json=totalLines,proto3" json:"total_lines,omitempty"`
+	Error         string                 `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FileLinesResponse) Reset() {
+	*x = FileLinesResponse{}
+	mi := &file_proto_filesystem_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileLinesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileLinesResponse) ProtoMessage() {}
+
+func (x *FileLinesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileLinesResponse.ProtoReflect.Descriptor instead.
+func (*FileLinesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *FileLinesResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *FileLinesResponse) GetLines() []*FileLine {
+	if x != nil {
+		return x.Lines
+	}
+	return nil
+}
+
+func (x *FileLinesResponse) GetTotalLines() int32 {
+	if x != nil {
+		return x.TotalLines
+	}
+	return 0
+}
+
+func (x *FileLinesResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// FileLine represents a single line with metadata
+type FileLine struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LineNumber    int32                  `protobuf:"varint,1,opt,name=line_number,json=lineNumber,proto3" json:"line_number,omitempty"`
+	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Length        int32                  `protobuf:"varint,3,opt,name=length,proto3" json:"length,omitempty"` // Line length in characters
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FileLine) Reset() {
+	*x = FileLine{}
+	mi := &file_proto_filesystem_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileLine) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileLine) ProtoMessage() {}
+
+func (x *FileLine) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileLine.ProtoReflect.Descriptor instead.
+func (*FileLine) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *FileLine) GetLineNumber() int32 {
+	if x != nil {
+		return x.LineNumber
+	}
+	return 0
+}
+
+func (x *FileLine) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *FileLine) GetLength() int32 {
+	if x != nil {
+		return x.Length
+	}
+	return 0
+}
+
+// UpdateFileLinesRequest for updating specific lines
+type UpdateFileLinesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	FileHandle    string                 `protobuf:"bytes,2,opt,name=file_handle,json=fileHandle,proto3" json:"file_handle,omitempty"` // Optional: if file is open
+	Updates       []*LineUpdate          `protobuf:"bytes,3,rep,name=updates,proto3" json:"updates,omitempty"`
+	CreateBackup  bool                   `protobuf:"varint,4,opt,name=create_backup,json=createBackup,proto3" json:"create_backup,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateFileLinesRequest) Reset() {
+	*x = UpdateFileLinesRequest{}
+	mi := &file_proto_filesystem_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateFileLinesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateFileLinesRequest) ProtoMessage() {}
+
+func (x *UpdateFileLinesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateFileLinesRequest.ProtoReflect.Descriptor instead.
+func (*UpdateFileLinesRequest) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *UpdateFileLinesRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *UpdateFileLinesRequest) GetFileHandle() string {
+	if x != nil {
+		return x.FileHandle
+	}
+	return ""
+}
+
+func (x *UpdateFileLinesRequest) GetUpdates() []*LineUpdate {
+	if x != nil {
+		return x.Updates
+	}
+	return nil
+}
+
+func (x *UpdateFileLinesRequest) GetCreateBackup() bool {
+	if x != nil {
+		return x.CreateBackup
+	}
+	return false
+}
+
+// LineUpdate represents a line modification
+type LineUpdate struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LineNumber    int32                  `protobuf:"varint,1,opt,name=line_number,json=lineNumber,proto3" json:"line_number,omitempty"`           // Line to update (1-based)
+	NewContent    string                 `protobuf:"bytes,2,opt,name=new_content,json=newContent,proto3" json:"new_content,omitempty"`            // New line content
+	Operation     LineOperation          `protobuf:"varint,3,opt,name=operation,proto3,enum=filesystem.LineOperation" json:"operation,omitempty"` // Insert, Replace, Delete
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LineUpdate) Reset() {
+	*x = LineUpdate{}
+	mi := &file_proto_filesystem_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LineUpdate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LineUpdate) ProtoMessage() {}
+
+func (x *LineUpdate) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LineUpdate.ProtoReflect.Descriptor instead.
+func (*LineUpdate) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *LineUpdate) GetLineNumber() int32 {
+	if x != nil {
+		return x.LineNumber
+	}
+	return 0
+}
+
+func (x *LineUpdate) GetNewContent() string {
+	if x != nil {
+		return x.NewContent
+	}
+	return ""
+}
+
+func (x *LineUpdate) GetOperation() LineOperation {
+	if x != nil {
+		return x.Operation
+	}
+	return LineOperation_REPLACE
+}
+
+// LockFileRequest for file locking
+type LockFileRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Path           string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	LockType       LockType               `protobuf:"varint,2,opt,name=lock_type,json=lockType,proto3,enum=filesystem.LockType" json:"lock_type,omitempty"` // Shared or Exclusive
+	TimeoutSeconds int32                  `protobuf:"varint,3,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`        // Lock timeout
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *LockFileRequest) Reset() {
+	*x = LockFileRequest{}
+	mi := &file_proto_filesystem_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LockFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LockFileRequest) ProtoMessage() {}
+
+func (x *LockFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LockFileRequest.ProtoReflect.Descriptor instead.
+func (*LockFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *LockFileRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *LockFileRequest) GetLockType() LockType {
+	if x != nil {
+		return x.LockType
+	}
+	return LockType_SHARED
+}
+
+func (x *LockFileRequest) GetTimeoutSeconds() int32 {
+	if x != nil {
+		return x.TimeoutSeconds
+	}
+	return 0
+}
+
+// LockFileResponse returns lock information
+type LockFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	LockId        string                 `protobuf:"bytes,2,opt,name=lock_id,json=lockId,proto3" json:"lock_id,omitempty"`           // Unique lock identifier
+	ExpiresAt     int64                  `protobuf:"varint,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"` // Lock expiration timestamp
+	Error         string                 `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LockFileResponse) Reset() {
+	*x = LockFileResponse{}
+	mi := &file_proto_filesystem_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LockFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LockFileResponse) ProtoMessage() {}
+
+func (x *LockFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LockFileResponse.ProtoReflect.Descriptor instead.
+func (*LockFileResponse) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *LockFileResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *LockFileResponse) GetLockId() string {
+	if x != nil {
+		return x.LockId
+	}
+	return ""
+}
+
+func (x *LockFileResponse) GetExpiresAt() int64 {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return 0
+}
+
+func (x *LockFileResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// UnlockFileRequest for releasing file locks
+type UnlockFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	LockId        string                 `protobuf:"bytes,2,opt,name=lock_id,json=lockId,proto3" json:"lock_id,omitempty"` // Lock identifier to release
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnlockFileRequest) Reset() {
+	*x = UnlockFileRequest{}
+	mi := &file_proto_filesystem_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnlockFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnlockFileRequest) ProtoMessage() {}
+
+func (x *UnlockFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_filesystem_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnlockFileRequest.ProtoReflect.Descriptor instead.
+func (*UnlockFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_filesystem_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *UnlockFileRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *UnlockFileRequest) GetLockId() string {
+	if x != nil {
+		return x.LockId
+	}
+	return ""
+}
+
 var File_proto_filesystem_proto protoreflect.FileDescriptor
 
 const file_proto_filesystem_proto_rawDesc = "" +
@@ -1191,7 +2228,100 @@ const file_proto_filesystem_proto_rawDesc = "" +
 	"\apattern\x18\x03 \x01(\tR\apattern\"[\n" +
 	"\x11HierarchyResponse\x12(\n" +
 	"\x04root\x18\x01 \x01(\v2\x14.filesystem.FileItemR\x04root\x12\x1c\n" +
-	"\ttruncated\x18\x02 \x01(\bR\ttruncated2\xe1\x06\n" +
+	"\ttruncated\x18\x02 \x01(\bR\ttruncated\"\xab\x01\n" +
+	"\x0fOpenFileRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12,\n" +
+	"\x04mode\x18\x02 \x01(\x0e2\x18.filesystem.FileOpenModeR\x04mode\x12/\n" +
+	"\x14create_if_not_exists\x18\x03 \x01(\bR\x11createIfNotExists\x12%\n" +
+	"\x0eexclusive_lock\x18\x04 \x01(\bR\rexclusiveLock\"\xaf\x01\n" +
+	"\x10OpenFileResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
+	"\vfile_handle\x18\x02 \x01(\tR\n" +
+	"fileHandle\x121\n" +
+	"\tfile_info\x18\x03 \x01(\v2\x14.filesystem.FileInfoR\bfileInfo\x12\x17\n" +
+	"\alock_id\x18\x04 \x01(\tR\x06lockId\x12\x14\n" +
+	"\x05error\x18\x05 \x01(\tR\x05error\"V\n" +
+	"\x10CloseFileRequest\x12\x1f\n" +
+	"\vfile_handle\x18\x01 \x01(\tR\n" +
+	"fileHandle\x12!\n" +
+	"\fsave_changes\x18\x02 \x01(\bR\vsaveChanges\"\xae\x01\n" +
+	"\x13FileContentResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12\x1a\n" +
+	"\bencoding\x18\x03 \x01(\tR\bencoding\x12\x1d\n" +
+	"\n" +
+	"line_count\x18\x04 \x01(\x05R\tlineCount\x12\x12\n" +
+	"\x04size\x18\x05 \x01(\x03R\x04size\x12\x14\n" +
+	"\x05error\x18\x06 \x01(\tR\x05error\"\xc5\x01\n" +
+	"\x17WriteFileContentRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1f\n" +
+	"\vfile_handle\x18\x02 \x01(\tR\n" +
+	"fileHandle\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\x12\x1a\n" +
+	"\bencoding\x18\x04 \x01(\tR\bencoding\x12#\n" +
+	"\rcreate_backup\x18\x05 \x01(\bR\fcreateBackup\x12\x1a\n" +
+	"\btruncate\x18\x06 \x01(\bR\btruncate\"\xb6\x01\n" +
+	"\x13GetFileLinesRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1f\n" +
+	"\vfile_handle\x18\x02 \x01(\tR\n" +
+	"fileHandle\x12\x1d\n" +
+	"\n" +
+	"start_line\x18\x03 \x01(\x05R\tstartLine\x12\x19\n" +
+	"\bend_line\x18\x04 \x01(\x05R\aendLine\x120\n" +
+	"\x14include_line_numbers\x18\x05 \x01(\bR\x12includeLineNumbers\"\x90\x01\n" +
+	"\x11FileLinesResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12*\n" +
+	"\x05lines\x18\x02 \x03(\v2\x14.filesystem.FileLineR\x05lines\x12\x1f\n" +
+	"\vtotal_lines\x18\x03 \x01(\x05R\n" +
+	"totalLines\x12\x14\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"]\n" +
+	"\bFileLine\x12\x1f\n" +
+	"\vline_number\x18\x01 \x01(\x05R\n" +
+	"lineNumber\x12\x18\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12\x16\n" +
+	"\x06length\x18\x03 \x01(\x05R\x06length\"\xa4\x01\n" +
+	"\x16UpdateFileLinesRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1f\n" +
+	"\vfile_handle\x18\x02 \x01(\tR\n" +
+	"fileHandle\x120\n" +
+	"\aupdates\x18\x03 \x03(\v2\x16.filesystem.LineUpdateR\aupdates\x12#\n" +
+	"\rcreate_backup\x18\x04 \x01(\bR\fcreateBackup\"\x87\x01\n" +
+	"\n" +
+	"LineUpdate\x12\x1f\n" +
+	"\vline_number\x18\x01 \x01(\x05R\n" +
+	"lineNumber\x12\x1f\n" +
+	"\vnew_content\x18\x02 \x01(\tR\n" +
+	"newContent\x127\n" +
+	"\toperation\x18\x03 \x01(\x0e2\x19.filesystem.LineOperationR\toperation\"\x81\x01\n" +
+	"\x0fLockFileRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x121\n" +
+	"\tlock_type\x18\x02 \x01(\x0e2\x14.filesystem.LockTypeR\blockType\x12'\n" +
+	"\x0ftimeout_seconds\x18\x03 \x01(\x05R\x0etimeoutSeconds\"z\n" +
+	"\x10LockFileResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x17\n" +
+	"\alock_id\x18\x02 \x01(\tR\x06lockId\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\x03 \x01(\x03R\texpiresAt\x12\x14\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"@\n" +
+	"\x11UnlockFileRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x17\n" +
+	"\alock_id\x18\x02 \x01(\tR\x06lockId*=\n" +
+	"\fFileOpenMode\x12\r\n" +
+	"\tREAD_ONLY\x10\x00\x12\x0e\n" +
+	"\n" +
+	"WRITE_ONLY\x10\x01\x12\x0e\n" +
+	"\n" +
+	"READ_WRITE\x10\x02*M\n" +
+	"\rLineOperation\x12\v\n" +
+	"\aREPLACE\x10\x00\x12\x11\n" +
+	"\rINSERT_BEFORE\x10\x01\x12\x10\n" +
+	"\fINSERT_AFTER\x10\x02\x12\n" +
+	"\n" +
+	"\x06DELETE\x10\x03*%\n" +
+	"\bLockType\x12\n" +
+	"\n" +
+	"\x06SHARED\x10\x00\x12\r\n" +
+	"\tEXCLUSIVE\x10\x012\xe0\v\n" +
 	"\x11FilesystemService\x12D\n" +
 	"\rListDirectory\x12\x17.filesystem.ListRequest\x1a\x18.filesystem.ListResponse\"\x00\x12M\n" +
 	"\fGetHierarchy\x12\x1c.filesystem.HierarchyRequest\x1a\x1d.filesystem.HierarchyResponse\"\x00\x12>\n" +
@@ -1205,7 +2335,16 @@ const file_proto_filesystem_proto_rawDesc = "" +
 	"\fDownloadFile\x12\x17.filesystem.FileRequest\x1a\x15.filesystem.FileChunk\"\x000\x01\x12?\n" +
 	"\x06Exists\x12\x17.filesystem.PathRequest\x1a\x1a.filesystem.ExistsResponse\"\x00\x12G\n" +
 	"\x10GetDirectorySize\x12\x17.filesystem.PathRequest\x1a\x18.filesystem.SizeResponse\"\x00\x12?\n" +
-	"\x06Search\x12\x19.filesystem.SearchRequest\x1a\x18.filesystem.ListResponse\"\x00B$Z\"github.com/filesystem-daemon/protob\x06proto3"
+	"\x06Search\x12\x19.filesystem.SearchRequest\x1a\x18.filesystem.ListResponse\"\x00\x12G\n" +
+	"\bOpenFile\x12\x1b.filesystem.OpenFileRequest\x1a\x1c.filesystem.OpenFileResponse\"\x00\x12J\n" +
+	"\tCloseFile\x12\x1c.filesystem.CloseFileRequest\x1a\x1d.filesystem.OperationResponse\"\x00\x12M\n" +
+	"\x0fReadFileContent\x12\x17.filesystem.FileRequest\x1a\x1f.filesystem.FileContentResponse\"\x00\x12X\n" +
+	"\x10WriteFileContent\x12#.filesystem.WriteFileContentRequest\x1a\x1d.filesystem.OperationResponse\"\x00\x12P\n" +
+	"\fGetFileLines\x12\x1f.filesystem.GetFileLinesRequest\x1a\x1d.filesystem.FileLinesResponse\"\x00\x12V\n" +
+	"\x0fUpdateFileLines\x12\".filesystem.UpdateFileLinesRequest\x1a\x1d.filesystem.OperationResponse\"\x00\x12G\n" +
+	"\bLockFile\x12\x1b.filesystem.LockFileRequest\x1a\x1c.filesystem.LockFileResponse\"\x00\x12L\n" +
+	"\n" +
+	"UnlockFile\x12\x1d.filesystem.UnlockFileRequest\x1a\x1d.filesystem.OperationResponse\"\x00B$Z\"github.com/filesystem-daemon/protob\x06proto3"
 
 var (
 	file_proto_filesystem_proto_rawDescOnce sync.Once
@@ -1219,59 +2358,98 @@ func file_proto_filesystem_proto_rawDescGZIP() []byte {
 	return file_proto_filesystem_proto_rawDescData
 }
 
-var file_proto_filesystem_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_proto_filesystem_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_proto_filesystem_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_proto_filesystem_proto_goTypes = []any{
-	(*ListRequest)(nil),            // 0: filesystem.ListRequest
-	(*FileItem)(nil),               // 1: filesystem.FileItem
-	(*ListResponse)(nil),           // 2: filesystem.ListResponse
-	(*FileRequest)(nil),            // 3: filesystem.FileRequest
-	(*FileInfo)(nil),               // 4: filesystem.FileInfo
-	(*CreateDirectoryRequest)(nil), // 5: filesystem.CreateDirectoryRequest
-	(*DeleteRequest)(nil),          // 6: filesystem.DeleteRequest
-	(*CopyRequest)(nil),            // 7: filesystem.CopyRequest
-	(*MoveRequest)(nil),            // 8: filesystem.MoveRequest
-	(*PathRequest)(nil),            // 9: filesystem.PathRequest
-	(*ExistsResponse)(nil),         // 10: filesystem.ExistsResponse
-	(*SizeResponse)(nil),           // 11: filesystem.SizeResponse
-	(*FileChunk)(nil),              // 12: filesystem.FileChunk
-	(*OperationResponse)(nil),      // 13: filesystem.OperationResponse
-	(*SearchRequest)(nil),          // 14: filesystem.SearchRequest
-	(*HierarchyRequest)(nil),       // 15: filesystem.HierarchyRequest
-	(*HierarchyResponse)(nil),      // 16: filesystem.HierarchyResponse
+	(FileOpenMode)(0),               // 0: filesystem.FileOpenMode
+	(LineOperation)(0),              // 1: filesystem.LineOperation
+	(LockType)(0),                   // 2: filesystem.LockType
+	(*ListRequest)(nil),             // 3: filesystem.ListRequest
+	(*FileItem)(nil),                // 4: filesystem.FileItem
+	(*ListResponse)(nil),            // 5: filesystem.ListResponse
+	(*FileRequest)(nil),             // 6: filesystem.FileRequest
+	(*FileInfo)(nil),                // 7: filesystem.FileInfo
+	(*CreateDirectoryRequest)(nil),  // 8: filesystem.CreateDirectoryRequest
+	(*DeleteRequest)(nil),           // 9: filesystem.DeleteRequest
+	(*CopyRequest)(nil),             // 10: filesystem.CopyRequest
+	(*MoveRequest)(nil),             // 11: filesystem.MoveRequest
+	(*PathRequest)(nil),             // 12: filesystem.PathRequest
+	(*ExistsResponse)(nil),          // 13: filesystem.ExistsResponse
+	(*SizeResponse)(nil),            // 14: filesystem.SizeResponse
+	(*FileChunk)(nil),               // 15: filesystem.FileChunk
+	(*OperationResponse)(nil),       // 16: filesystem.OperationResponse
+	(*SearchRequest)(nil),           // 17: filesystem.SearchRequest
+	(*HierarchyRequest)(nil),        // 18: filesystem.HierarchyRequest
+	(*HierarchyResponse)(nil),       // 19: filesystem.HierarchyResponse
+	(*OpenFileRequest)(nil),         // 20: filesystem.OpenFileRequest
+	(*OpenFileResponse)(nil),        // 21: filesystem.OpenFileResponse
+	(*CloseFileRequest)(nil),        // 22: filesystem.CloseFileRequest
+	(*FileContentResponse)(nil),     // 23: filesystem.FileContentResponse
+	(*WriteFileContentRequest)(nil), // 24: filesystem.WriteFileContentRequest
+	(*GetFileLinesRequest)(nil),     // 25: filesystem.GetFileLinesRequest
+	(*FileLinesResponse)(nil),       // 26: filesystem.FileLinesResponse
+	(*FileLine)(nil),                // 27: filesystem.FileLine
+	(*UpdateFileLinesRequest)(nil),  // 28: filesystem.UpdateFileLinesRequest
+	(*LineUpdate)(nil),              // 29: filesystem.LineUpdate
+	(*LockFileRequest)(nil),         // 30: filesystem.LockFileRequest
+	(*LockFileResponse)(nil),        // 31: filesystem.LockFileResponse
+	(*UnlockFileRequest)(nil),       // 32: filesystem.UnlockFileRequest
 }
 var file_proto_filesystem_proto_depIdxs = []int32{
-	1,  // 0: filesystem.FileItem.children:type_name -> filesystem.FileItem
-	1,  // 1: filesystem.ListResponse.items:type_name -> filesystem.FileItem
-	1,  // 2: filesystem.HierarchyResponse.root:type_name -> filesystem.FileItem
-	0,  // 3: filesystem.FilesystemService.ListDirectory:input_type -> filesystem.ListRequest
-	15, // 4: filesystem.FilesystemService.GetHierarchy:input_type -> filesystem.HierarchyRequest
-	3,  // 5: filesystem.FilesystemService.GetFileInfo:input_type -> filesystem.FileRequest
-	5,  // 6: filesystem.FilesystemService.CreateDirectory:input_type -> filesystem.CreateDirectoryRequest
-	6,  // 7: filesystem.FilesystemService.Delete:input_type -> filesystem.DeleteRequest
-	7,  // 8: filesystem.FilesystemService.Copy:input_type -> filesystem.CopyRequest
-	8,  // 9: filesystem.FilesystemService.Move:input_type -> filesystem.MoveRequest
-	12, // 10: filesystem.FilesystemService.UploadFile:input_type -> filesystem.FileChunk
-	3,  // 11: filesystem.FilesystemService.DownloadFile:input_type -> filesystem.FileRequest
-	9,  // 12: filesystem.FilesystemService.Exists:input_type -> filesystem.PathRequest
-	9,  // 13: filesystem.FilesystemService.GetDirectorySize:input_type -> filesystem.PathRequest
-	14, // 14: filesystem.FilesystemService.Search:input_type -> filesystem.SearchRequest
-	2,  // 15: filesystem.FilesystemService.ListDirectory:output_type -> filesystem.ListResponse
-	16, // 16: filesystem.FilesystemService.GetHierarchy:output_type -> filesystem.HierarchyResponse
-	4,  // 17: filesystem.FilesystemService.GetFileInfo:output_type -> filesystem.FileInfo
-	13, // 18: filesystem.FilesystemService.CreateDirectory:output_type -> filesystem.OperationResponse
-	13, // 19: filesystem.FilesystemService.Delete:output_type -> filesystem.OperationResponse
-	13, // 20: filesystem.FilesystemService.Copy:output_type -> filesystem.OperationResponse
-	13, // 21: filesystem.FilesystemService.Move:output_type -> filesystem.OperationResponse
-	13, // 22: filesystem.FilesystemService.UploadFile:output_type -> filesystem.OperationResponse
-	12, // 23: filesystem.FilesystemService.DownloadFile:output_type -> filesystem.FileChunk
-	10, // 24: filesystem.FilesystemService.Exists:output_type -> filesystem.ExistsResponse
-	11, // 25: filesystem.FilesystemService.GetDirectorySize:output_type -> filesystem.SizeResponse
-	2,  // 26: filesystem.FilesystemService.Search:output_type -> filesystem.ListResponse
-	15, // [15:27] is the sub-list for method output_type
-	3,  // [3:15] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	4,  // 0: filesystem.FileItem.children:type_name -> filesystem.FileItem
+	4,  // 1: filesystem.ListResponse.items:type_name -> filesystem.FileItem
+	4,  // 2: filesystem.HierarchyResponse.root:type_name -> filesystem.FileItem
+	0,  // 3: filesystem.OpenFileRequest.mode:type_name -> filesystem.FileOpenMode
+	7,  // 4: filesystem.OpenFileResponse.file_info:type_name -> filesystem.FileInfo
+	27, // 5: filesystem.FileLinesResponse.lines:type_name -> filesystem.FileLine
+	29, // 6: filesystem.UpdateFileLinesRequest.updates:type_name -> filesystem.LineUpdate
+	1,  // 7: filesystem.LineUpdate.operation:type_name -> filesystem.LineOperation
+	2,  // 8: filesystem.LockFileRequest.lock_type:type_name -> filesystem.LockType
+	3,  // 9: filesystem.FilesystemService.ListDirectory:input_type -> filesystem.ListRequest
+	18, // 10: filesystem.FilesystemService.GetHierarchy:input_type -> filesystem.HierarchyRequest
+	6,  // 11: filesystem.FilesystemService.GetFileInfo:input_type -> filesystem.FileRequest
+	8,  // 12: filesystem.FilesystemService.CreateDirectory:input_type -> filesystem.CreateDirectoryRequest
+	9,  // 13: filesystem.FilesystemService.Delete:input_type -> filesystem.DeleteRequest
+	10, // 14: filesystem.FilesystemService.Copy:input_type -> filesystem.CopyRequest
+	11, // 15: filesystem.FilesystemService.Move:input_type -> filesystem.MoveRequest
+	15, // 16: filesystem.FilesystemService.UploadFile:input_type -> filesystem.FileChunk
+	6,  // 17: filesystem.FilesystemService.DownloadFile:input_type -> filesystem.FileRequest
+	12, // 18: filesystem.FilesystemService.Exists:input_type -> filesystem.PathRequest
+	12, // 19: filesystem.FilesystemService.GetDirectorySize:input_type -> filesystem.PathRequest
+	17, // 20: filesystem.FilesystemService.Search:input_type -> filesystem.SearchRequest
+	20, // 21: filesystem.FilesystemService.OpenFile:input_type -> filesystem.OpenFileRequest
+	22, // 22: filesystem.FilesystemService.CloseFile:input_type -> filesystem.CloseFileRequest
+	6,  // 23: filesystem.FilesystemService.ReadFileContent:input_type -> filesystem.FileRequest
+	24, // 24: filesystem.FilesystemService.WriteFileContent:input_type -> filesystem.WriteFileContentRequest
+	25, // 25: filesystem.FilesystemService.GetFileLines:input_type -> filesystem.GetFileLinesRequest
+	28, // 26: filesystem.FilesystemService.UpdateFileLines:input_type -> filesystem.UpdateFileLinesRequest
+	30, // 27: filesystem.FilesystemService.LockFile:input_type -> filesystem.LockFileRequest
+	32, // 28: filesystem.FilesystemService.UnlockFile:input_type -> filesystem.UnlockFileRequest
+	5,  // 29: filesystem.FilesystemService.ListDirectory:output_type -> filesystem.ListResponse
+	19, // 30: filesystem.FilesystemService.GetHierarchy:output_type -> filesystem.HierarchyResponse
+	7,  // 31: filesystem.FilesystemService.GetFileInfo:output_type -> filesystem.FileInfo
+	16, // 32: filesystem.FilesystemService.CreateDirectory:output_type -> filesystem.OperationResponse
+	16, // 33: filesystem.FilesystemService.Delete:output_type -> filesystem.OperationResponse
+	16, // 34: filesystem.FilesystemService.Copy:output_type -> filesystem.OperationResponse
+	16, // 35: filesystem.FilesystemService.Move:output_type -> filesystem.OperationResponse
+	16, // 36: filesystem.FilesystemService.UploadFile:output_type -> filesystem.OperationResponse
+	15, // 37: filesystem.FilesystemService.DownloadFile:output_type -> filesystem.FileChunk
+	13, // 38: filesystem.FilesystemService.Exists:output_type -> filesystem.ExistsResponse
+	14, // 39: filesystem.FilesystemService.GetDirectorySize:output_type -> filesystem.SizeResponse
+	5,  // 40: filesystem.FilesystemService.Search:output_type -> filesystem.ListResponse
+	21, // 41: filesystem.FilesystemService.OpenFile:output_type -> filesystem.OpenFileResponse
+	16, // 42: filesystem.FilesystemService.CloseFile:output_type -> filesystem.OperationResponse
+	23, // 43: filesystem.FilesystemService.ReadFileContent:output_type -> filesystem.FileContentResponse
+	16, // 44: filesystem.FilesystemService.WriteFileContent:output_type -> filesystem.OperationResponse
+	26, // 45: filesystem.FilesystemService.GetFileLines:output_type -> filesystem.FileLinesResponse
+	16, // 46: filesystem.FilesystemService.UpdateFileLines:output_type -> filesystem.OperationResponse
+	31, // 47: filesystem.FilesystemService.LockFile:output_type -> filesystem.LockFileResponse
+	16, // 48: filesystem.FilesystemService.UnlockFile:output_type -> filesystem.OperationResponse
+	29, // [29:49] is the sub-list for method output_type
+	9,  // [9:29] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_proto_filesystem_proto_init() }
@@ -1284,13 +2462,14 @@ func file_proto_filesystem_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_filesystem_proto_rawDesc), len(file_proto_filesystem_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   17,
+			NumEnums:      3,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_proto_filesystem_proto_goTypes,
 		DependencyIndexes: file_proto_filesystem_proto_depIdxs,
+		EnumInfos:         file_proto_filesystem_proto_enumTypes,
 		MessageInfos:      file_proto_filesystem_proto_msgTypes,
 	}.Build()
 	File_proto_filesystem_proto = out.File

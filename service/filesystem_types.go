@@ -19,6 +19,16 @@ type (
 	MoveRequest            = proto.MoveRequest
 	PathRequest            = proto.PathRequest
 	SearchRequest          = proto.SearchRequest
+	HierarchyRequest       = proto.HierarchyRequest
+
+	// New editor request types
+	OpenFileRequest         = proto.OpenFileRequest
+	CloseFileRequest        = proto.CloseFileRequest
+	WriteFileContentRequest = proto.WriteFileContentRequest
+	GetFileLinesRequest     = proto.GetFileLinesRequest
+	UpdateFileLinesRequest  = proto.UpdateFileLinesRequest
+	LockFileRequest         = proto.LockFileRequest
+	UnlockFileRequest       = proto.UnlockFileRequest
 
 	// Service response types
 	ListResponse      = proto.ListResponse
@@ -28,6 +38,20 @@ type (
 	ExistsResponse    = proto.ExistsResponse
 	SizeResponse      = proto.SizeResponse
 	FileChunk         = proto.FileChunk
+	HierarchyResponse = proto.HierarchyResponse
+
+	// New editor response types
+	OpenFileResponse    = proto.OpenFileResponse
+	FileContentResponse = proto.FileContentResponse
+	FileLinesResponse   = proto.FileLinesResponse
+	LockFileResponse    = proto.LockFileResponse
+	FileLine            = proto.FileLine
+	LineUpdate          = proto.LineUpdate
+
+	// Enums
+	FileOpenMode  = proto.FileOpenMode
+	LineOperation = proto.LineOperation
+	LockType      = proto.LockType
 
 	// Streaming service interfaces
 	FilesystemService_UploadFileServer   = proto.FilesystemService_UploadFileServer

@@ -41,6 +41,16 @@ service FilesystemService {
   
   // Search for files/directories
   rpc Search(SearchRequest) returns (ListResponse) {}
+  
+  // File content operations for editing
+  rpc OpenFile(OpenFileRequest) returns (OpenFileResponse) {}
+  rpc CloseFile(CloseFileRequest) returns (OperationResponse) {}
+  rpc ReadFileContent(FileRequest) returns (FileContentResponse) {}
+  rpc WriteFileContent(WriteFileContentRequest) returns (OperationResponse) {}
+  rpc GetFileLines(GetFileLinesRequest) returns (FileLinesResponse) {}
+  rpc UpdateFileLines(UpdateFileLinesRequest) returns (OperationResponse) {}
+  rpc LockFile(LockFileRequest) returns (LockFileResponse) {}
+  rpc UnlockFile(UnlockFileRequest) returns (OperationResponse) {}
 }
 
 // ListRequest specifies a directory to list
@@ -167,4 +177,126 @@ message HierarchyRequest {
 message HierarchyResponse {
   FileItem root = 1;       // Root directory with nested children
   bool truncated = 2;      // Indicates if hierarchy was truncated due to max_depth
+}
+
+// OpenFileRequest for opening a file for editing
+message OpenFileRequest {
+  string path = 1;
+  FileOpenMode mode = 2;        // Read, Write, ReadWrite
+  bool create_if_not_exists = 3;
+  bool exclusive_lock = 4;      // Request exclusive lock
+}
+
+// OpenFileResponse returns file handle and metadata
+message OpenFileResponse {
+  bool success = 1;
+  string file_handle = 2;       // Unique handle for this open session
+  FileInfo file_info = 3;       // File metadata
+  string lock_id = 4;           // Lock identifier if locked
+  string error = 5;
+}
+
+// CloseFileRequest for closing an open file
+message CloseFileRequest {
+  string file_handle = 1;
+  bool save_changes = 2;        // Whether to save pending changes
+}
+
+// FileContentResponse returns file content as text
+message FileContentResponse {
+  bool success = 1;
+  string content = 2;           // File content as string
+  string encoding = 3;          // File encoding (utf-8, ascii, etc.)
+  int32 line_count = 4;         // Total number of lines
+  int64 size = 5;               // File size in bytes
+  string error = 6;
+}
+
+// WriteFileContentRequest for writing entire file content
+message WriteFileContentRequest {
+  string path = 1;
+  string file_handle = 2;       // Optional: if file is open
+  string content = 3;           // New file content
+  string encoding = 4;          // Content encoding
+  bool create_backup = 5;       // Create backup before writing
+  bool truncate = 6;            // Truncate file before writing
+}
+
+// GetFileLinesRequest for reading specific lines
+message GetFileLinesRequest {
+  string path = 1;
+  string file_handle = 2;       // Optional: if file is open
+  int32 start_line = 3;         // Starting line number (1-based)
+  int32 end_line = 4;           // Ending line number (0 for end of file)
+  bool include_line_numbers = 5;
+}
+
+// FileLinesResponse returns specific lines from file
+message FileLinesResponse {
+  bool success = 1;
+  repeated FileLine lines = 2;
+  int32 total_lines = 3;
+  string error = 4;
+}
+
+// FileLine represents a single line with metadata
+message FileLine {
+  int32 line_number = 1;
+  string content = 2;
+  int32 length = 3;             // Line length in characters
+}
+
+// UpdateFileLinesRequest for updating specific lines
+message UpdateFileLinesRequest {
+  string path = 1;
+  string file_handle = 2;       // Optional: if file is open
+  repeated LineUpdate updates = 3;
+  bool create_backup = 4;
+}
+
+// LineUpdate represents a line modification
+message LineUpdate {
+  int32 line_number = 1;        // Line to update (1-based)
+  string new_content = 2;       // New line content
+  LineOperation operation = 3;   // Insert, Replace, Delete
+}
+
+// LockFileRequest for file locking
+message LockFileRequest {
+  string path = 1;
+  LockType lock_type = 2;       // Shared or Exclusive
+  int32 timeout_seconds = 3;    // Lock timeout
+}
+
+// LockFileResponse returns lock information
+message LockFileResponse {
+  bool success = 1;
+  string lock_id = 2;           // Unique lock identifier
+  int64 expires_at = 3;         // Lock expiration timestamp
+  string error = 4;
+}
+
+// UnlockFileRequest for releasing file locks
+message UnlockFileRequest {
+  string path = 1;
+  string lock_id = 2;           // Lock identifier to release
+}
+
+// Enums for file operations
+enum FileOpenMode {
+  READ_ONLY = 0;
+  WRITE_ONLY = 1;
+  READ_WRITE = 2;
+}
+
+enum LineOperation {
+  REPLACE = 0;
+  INSERT_BEFORE = 1;
+  INSERT_AFTER = 2;
+  DELETE = 3;
+}
+
+enum LockType {
+  SHARED = 0;
+  EXCLUSIVE = 1;
 }

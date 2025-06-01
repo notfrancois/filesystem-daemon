@@ -31,6 +31,14 @@ const (
 	FilesystemService_Exists_FullMethodName           = "/filesystem.FilesystemService/Exists"
 	FilesystemService_GetDirectorySize_FullMethodName = "/filesystem.FilesystemService/GetDirectorySize"
 	FilesystemService_Search_FullMethodName           = "/filesystem.FilesystemService/Search"
+	FilesystemService_OpenFile_FullMethodName         = "/filesystem.FilesystemService/OpenFile"
+	FilesystemService_CloseFile_FullMethodName        = "/filesystem.FilesystemService/CloseFile"
+	FilesystemService_ReadFileContent_FullMethodName  = "/filesystem.FilesystemService/ReadFileContent"
+	FilesystemService_WriteFileContent_FullMethodName = "/filesystem.FilesystemService/WriteFileContent"
+	FilesystemService_GetFileLines_FullMethodName     = "/filesystem.FilesystemService/GetFileLines"
+	FilesystemService_UpdateFileLines_FullMethodName  = "/filesystem.FilesystemService/UpdateFileLines"
+	FilesystemService_LockFile_FullMethodName         = "/filesystem.FilesystemService/LockFile"
+	FilesystemService_UnlockFile_FullMethodName       = "/filesystem.FilesystemService/UnlockFile"
 )
 
 // FilesystemServiceClient is the client API for FilesystemService service.
@@ -63,6 +71,15 @@ type FilesystemServiceClient interface {
 	GetDirectorySize(ctx context.Context, in *PathRequest, opts ...grpc.CallOption) (*SizeResponse, error)
 	// Search for files/directories
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	// File content operations for editing
+	OpenFile(ctx context.Context, in *OpenFileRequest, opts ...grpc.CallOption) (*OpenFileResponse, error)
+	CloseFile(ctx context.Context, in *CloseFileRequest, opts ...grpc.CallOption) (*OperationResponse, error)
+	ReadFileContent(ctx context.Context, in *FileRequest, opts ...grpc.CallOption) (*FileContentResponse, error)
+	WriteFileContent(ctx context.Context, in *WriteFileContentRequest, opts ...grpc.CallOption) (*OperationResponse, error)
+	GetFileLines(ctx context.Context, in *GetFileLinesRequest, opts ...grpc.CallOption) (*FileLinesResponse, error)
+	UpdateFileLines(ctx context.Context, in *UpdateFileLinesRequest, opts ...grpc.CallOption) (*OperationResponse, error)
+	LockFile(ctx context.Context, in *LockFileRequest, opts ...grpc.CallOption) (*LockFileResponse, error)
+	UnlockFile(ctx context.Context, in *UnlockFileRequest, opts ...grpc.CallOption) (*OperationResponse, error)
 }
 
 type filesystemServiceClient struct {
@@ -205,6 +222,86 @@ func (c *filesystemServiceClient) Search(ctx context.Context, in *SearchRequest,
 	return out, nil
 }
 
+func (c *filesystemServiceClient) OpenFile(ctx context.Context, in *OpenFileRequest, opts ...grpc.CallOption) (*OpenFileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpenFileResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_OpenFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesystemServiceClient) CloseFile(ctx context.Context, in *CloseFileRequest, opts ...grpc.CallOption) (*OperationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OperationResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_CloseFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesystemServiceClient) ReadFileContent(ctx context.Context, in *FileRequest, opts ...grpc.CallOption) (*FileContentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FileContentResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_ReadFileContent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesystemServiceClient) WriteFileContent(ctx context.Context, in *WriteFileContentRequest, opts ...grpc.CallOption) (*OperationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OperationResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_WriteFileContent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesystemServiceClient) GetFileLines(ctx context.Context, in *GetFileLinesRequest, opts ...grpc.CallOption) (*FileLinesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FileLinesResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_GetFileLines_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesystemServiceClient) UpdateFileLines(ctx context.Context, in *UpdateFileLinesRequest, opts ...grpc.CallOption) (*OperationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OperationResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_UpdateFileLines_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesystemServiceClient) LockFile(ctx context.Context, in *LockFileRequest, opts ...grpc.CallOption) (*LockFileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LockFileResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_LockFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesystemServiceClient) UnlockFile(ctx context.Context, in *UnlockFileRequest, opts ...grpc.CallOption) (*OperationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OperationResponse)
+	err := c.cc.Invoke(ctx, FilesystemService_UnlockFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FilesystemServiceServer is the server API for FilesystemService service.
 // All implementations must embed UnimplementedFilesystemServiceServer
 // for forward compatibility.
@@ -235,6 +332,15 @@ type FilesystemServiceServer interface {
 	GetDirectorySize(context.Context, *PathRequest) (*SizeResponse, error)
 	// Search for files/directories
 	Search(context.Context, *SearchRequest) (*ListResponse, error)
+	// File content operations for editing
+	OpenFile(context.Context, *OpenFileRequest) (*OpenFileResponse, error)
+	CloseFile(context.Context, *CloseFileRequest) (*OperationResponse, error)
+	ReadFileContent(context.Context, *FileRequest) (*FileContentResponse, error)
+	WriteFileContent(context.Context, *WriteFileContentRequest) (*OperationResponse, error)
+	GetFileLines(context.Context, *GetFileLinesRequest) (*FileLinesResponse, error)
+	UpdateFileLines(context.Context, *UpdateFileLinesRequest) (*OperationResponse, error)
+	LockFile(context.Context, *LockFileRequest) (*LockFileResponse, error)
+	UnlockFile(context.Context, *UnlockFileRequest) (*OperationResponse, error)
 	mustEmbedUnimplementedFilesystemServiceServer()
 }
 
@@ -280,6 +386,30 @@ func (UnimplementedFilesystemServiceServer) GetDirectorySize(context.Context, *P
 }
 func (UnimplementedFilesystemServiceServer) Search(context.Context, *SearchRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedFilesystemServiceServer) OpenFile(context.Context, *OpenFileRequest) (*OpenFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OpenFile not implemented")
+}
+func (UnimplementedFilesystemServiceServer) CloseFile(context.Context, *CloseFileRequest) (*OperationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CloseFile not implemented")
+}
+func (UnimplementedFilesystemServiceServer) ReadFileContent(context.Context, *FileRequest) (*FileContentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadFileContent not implemented")
+}
+func (UnimplementedFilesystemServiceServer) WriteFileContent(context.Context, *WriteFileContentRequest) (*OperationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WriteFileContent not implemented")
+}
+func (UnimplementedFilesystemServiceServer) GetFileLines(context.Context, *GetFileLinesRequest) (*FileLinesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFileLines not implemented")
+}
+func (UnimplementedFilesystemServiceServer) UpdateFileLines(context.Context, *UpdateFileLinesRequest) (*OperationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFileLines not implemented")
+}
+func (UnimplementedFilesystemServiceServer) LockFile(context.Context, *LockFileRequest) (*LockFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LockFile not implemented")
+}
+func (UnimplementedFilesystemServiceServer) UnlockFile(context.Context, *UnlockFileRequest) (*OperationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnlockFile not implemented")
 }
 func (UnimplementedFilesystemServiceServer) mustEmbedUnimplementedFilesystemServiceServer() {}
 func (UnimplementedFilesystemServiceServer) testEmbeddedByValue()                           {}
@@ -500,6 +630,150 @@ func _FilesystemService_Search_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FilesystemService_OpenFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OpenFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).OpenFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_OpenFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).OpenFile(ctx, req.(*OpenFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FilesystemService_CloseFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CloseFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).CloseFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_CloseFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).CloseFile(ctx, req.(*CloseFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FilesystemService_ReadFileContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).ReadFileContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_ReadFileContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).ReadFileContent(ctx, req.(*FileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FilesystemService_WriteFileContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteFileContentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).WriteFileContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_WriteFileContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).WriteFileContent(ctx, req.(*WriteFileContentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FilesystemService_GetFileLines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFileLinesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).GetFileLines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_GetFileLines_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).GetFileLines(ctx, req.(*GetFileLinesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FilesystemService_UpdateFileLines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateFileLinesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).UpdateFileLines(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_UpdateFileLines_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).UpdateFileLines(ctx, req.(*UpdateFileLinesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FilesystemService_LockFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LockFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).LockFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_LockFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).LockFile(ctx, req.(*LockFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FilesystemService_UnlockFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnlockFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesystemServiceServer).UnlockFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FilesystemService_UnlockFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesystemServiceServer).UnlockFile(ctx, req.(*UnlockFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FilesystemService_ServiceDesc is the grpc.ServiceDesc for FilesystemService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -546,6 +820,38 @@ var FilesystemService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Search",
 			Handler:    _FilesystemService_Search_Handler,
+		},
+		{
+			MethodName: "OpenFile",
+			Handler:    _FilesystemService_OpenFile_Handler,
+		},
+		{
+			MethodName: "CloseFile",
+			Handler:    _FilesystemService_CloseFile_Handler,
+		},
+		{
+			MethodName: "ReadFileContent",
+			Handler:    _FilesystemService_ReadFileContent_Handler,
+		},
+		{
+			MethodName: "WriteFileContent",
+			Handler:    _FilesystemService_WriteFileContent_Handler,
+		},
+		{
+			MethodName: "GetFileLines",
+			Handler:    _FilesystemService_GetFileLines_Handler,
+		},
+		{
+			MethodName: "UpdateFileLines",
+			Handler:    _FilesystemService_UpdateFileLines_Handler,
+		},
+		{
+			MethodName: "LockFile",
+			Handler:    _FilesystemService_LockFile_Handler,
+		},
+		{
+			MethodName: "UnlockFile",
+			Handler:    _FilesystemService_UnlockFile_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
