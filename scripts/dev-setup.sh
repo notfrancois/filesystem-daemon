@@ -133,7 +133,7 @@ EOF
     export LOG_FORMAT=text
     
     # Start with development compose
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
     
     log "Development services started!"
     log "gRPC server: localhost:50051 (no TLS)"

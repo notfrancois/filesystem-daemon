@@ -40,7 +40,7 @@ docker-build:
 	docker tag filesystem-daemon:$(shell git rev-parse --short HEAD) filesystem-daemon:latest
 
 docker-run:
-	docker compose up -d
+	docker compose up -d --build
 
 docker-stop:
 	docker compose down
